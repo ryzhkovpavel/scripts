@@ -19,17 +19,19 @@ RearmChannelTime[1] = 3.00
 RearmChannelTime[2] = 1.5
 RearmChannelTime[3] = 0.75
 local clone, clone_q, clone_w, clone_e, clone_mana, clone_state, clone_target, thinker
-local clone_hex, clone_orchid, clone_blood, clone_nullifier, clone_silver, clone_mjolnir, clone_manta, clone_midas, clone_bkb, clone_diffusal, clone_satanic, clone_boots, clone_necro
+local clone_hex, clone_orchid, clone_blood, clone_nullifier, clone_silver, clone_mjolnir, clone_manta, clone_midas, clone_bkb, clone_diffusal, clone_satanic, clone_boots, clone_necro, clone_mom
 local x,y
 local arcPanelW = 120
 local arcPanelH = 277
 local arcFont = Renderer.LoadFont("Arial", 18, Enum.FontWeight.EXTRABOLD)
+local wrFont = Renderer.LoadFont("Tahoma", 15, Enum.FontWeight.EXTRABOLD)
 local arcPushMode = Config.ReadString("KAIO", "arcPushMode", "Auto")
 local arcPushModeLine = Config.ReadString("KAIO", "arcPushModeLine", "min")
 local necroTable = {}
 local mantaTable = {}
+local canBeShackled = {}
 --items
-local urn, soulring, vessel, hex, halberd, mjolnir, bkb, nullifier, solar, courage, force, pike, eul, orchid, bloodthorn, diffusal, armlet, lotus, satanic, blademail, blink, abyssal, eblade, phase, discord, shiva, refresher, manta, silver, midas, necro, silver
+local urn, soulring, vessel, hex, halberd, mjolnir, bkb, nullifier, solar, courage, force, pike, eul, orchid, bloodthorn, diffusal, armlet, lotus, satanic, blademail, blink, abyssal, eblade, phase, discord, shiva, refresher, manta, silver, midas, necro, silver, branch, mom
 local time = 0
 local cachedHeroIcons = {}
 local cachedItemIcons = {}
@@ -61,6 +63,8 @@ AllInOne.optionArcEnableMidas = Menu.AddOptionBool({"KAIO", "Hero Specific", "Ar
 Menu.AddOptionIcon(AllInOne.optionArcEnableMidas, "panorama/images/items/hand_of_midas_png.vtex_c")
 AllInOne.optionArcEnableManta = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Manta Style", false)
 Menu.AddOptionIcon(AllInOne.optionArcEnableManta, "panorama/images/items/manta_png.vtex_c")
+AllInOne.optionArcEnableMom = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Mask of Madness")
+Menu.AddOptionIcon(AllInOne.optionArcEnableMom, "panorama/images/items/mask_of_madness_png.vtex_c")
 AllInOne.optionArcEnableMjolnir = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Mjolnir", false)
 Menu.AddOptionIcon(AllInOne.optionArcEnableMjolnir, "panorama/images/items/mjollnir_png.vtex_c")
 AllInOne.optionArcEnableNecro = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Necronomicon", false)
@@ -74,8 +78,10 @@ Menu.AddOptionIcon(AllInOne.optionArcEnableSatanic, "panorama/images/items/satan
 AllInOne.optionArcSatanicThreshold = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "HP Percent for satanic use", 1, 50, 15)
 AllInOne.optionArcEnableHex = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Scythe of Vyse", false)
 Menu.AddOptionIcon(AllInOne.optionArcEnableHex, "panorama/images/items/sheepstick_png.vtex_c")
-AllInOne.optionArcEnableSilver = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Silver Edge", false)
+AllInOne.optionArcEnableSilver = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Silver Edge (Main Hero)", false)
 Menu.AddOptionIcon(AllInOne.optionArcEnableSilver, "panorama/images/items/silver_edge_png.vtex_c")
+AllInOne.optionArcEnableSilverClone = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Silver Edge (Clone)", false)
+Menu.AddOptionIcon(AllInOne.optionArcEnableSilverClone, "panorama/images/items/silver_edge_png.vtex_c")
 AllInOne.optionClinkzEnable = Menu.AddOptionBool({"KAIO","Hero Specific", "Clinkz"}, "Enable", false)
 Menu.AddOptionIcon(AllInOne.optionClinkzEnable, "panorama/images/items/branches_png.vtex_c")
 Menu.AddMenuIcon({"KAIO","Hero Specific", "Clinkz"}, "panorama/images/heroes/icons/npc_dota_hero_clinkz_png.vtex_c")
@@ -295,6 +301,37 @@ Menu.AddOptionIcon(AllInOne.optionTuskEnableUrn, "panorama/images/items/urn_of_s
 AllInOne.optionTuskEnableVessel = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tusk", "Items"}, "Spirit Vessel", false)
 Menu.AddOptionIcon(AllInOne.optionTuskEnableVessel, "panorama/images/items/spirit_vessel_png.vtex_c")
 AllInOne.optionTuskComboRadius = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Tusk"}, "Combo Radius", 200, 2500, 1500)
+AllInOne.optionWindrunnerEnable = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner"}, "Enable", false)
+Menu.AddMenuIcon({"KAIO", "Hero Specific", "Windrunner"}, "panorama/images/heroes/icons/npc_dota_hero_windrunner_png.vtex_c")
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnable, "panorama/images/items/branches_png.vtex_c")
+AllInOne.optionWindrunnerComboKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Windrunner"}, "Combo Key", Enum.ButtonCode.KEY_Z)
+AllInOne.optionWindrunnerTargetStyle = Menu.AddOptionCombo({"KAIO", "Hero Specific", "Windrunner"}, "Target Style", {"Lock Target", "Free Target"}, 0)
+AllInOne.optionWindrunnerDrawShackle = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner"}, "Draw when you can shackle", false)
+AllInOne.optionWindrunnerDebuffUnstack = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner"}, "Debuff Unstack", true)
+AllInOne.optionWindrunnerCheckBM = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner"}, "Check BM/Lotus", true)
+AllInOne.optionWindrunnerEnableShackle = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Skills"}, "Shackleshot", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableShackle, "panorama/images/spellicons/windrunner_shackleshot_png.vtex_c")
+AllInOne.optionWindrunnerEnableWindrun = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Skills"}, "Windrun", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableWindrun, "panorama/images/spellicons/windrunner_windrun_png.vtex_c")
+AllInOne.optionWindrunnerWindrunMinimumHeroAround = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Windrunner", "Skills"}, "Minimum Heroes Around to use windrun", 1, 5, 1)
+AllInOne.optionWindrunnerEnableFocusFire = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Skills"}, "Focus Fire", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableFocusFire, "panorama/images/spellicons/windrunner_focusfire_png.vtex_c")
+AllInOne.optionWindrunnerEnableBkb = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Black King Bar", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableBkb, "panorama/images/items/black_king_bar_png.vtex_c")
+AllInOne.optionWindrunnerEnableBlink = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Blink Dagger", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableBlink, "panorama/images/items/blink_png.vtex_c")
+AllInOne.optionWindrunnerEnableBlood = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Bloodthorn", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableBlood, "panorama/images/items/bloodthorn_png.vtex_c")
+AllInOne.optionWindrunnerEnableBranches = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Branch-Blink Combo", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableBranches, "panorama/images/items/branches_png.vtex_c")
+AllInOne.optionWindrunnerEnableDiffusal = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Diffusal Blade", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableDiffusal, "panorama/images/items/diffusal_blade_png.vtex_c")
+AllInOne.optionWindrunnerEnableNullifier = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Nullifier", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableNullifier, "panorama/images/items/nullifier_png.vtex_c")
+AllInOne.optionWindrunnerEnableOrchid = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Orchid", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableOrchid, "panorama/images/items/orchid_png.vtex_c")
+AllInOne.optionWindrunnerEnableHex = Menu.AddOptionBool({"KAIO", "Hero Specific", "Windrunner", "Items"}, "Scythe of Vyse", false)
+Menu.AddOptionIcon(AllInOne.optionWindrunnerEnableHex, "panorama/images/items/sheepstick_png.vtex_c")
 AllInOne.optionEnablePoopLinken = Menu.AddOptionBool({"KAIO", "Poop Linken"}, "Enable", false)
 Menu.AddMenuIcon({"KAIO", "Poop Linken"}, "panorama/images/items/sphere_png.vtex_c")
 Menu.AddOptionIcon(AllInOne.optionEnablePoopLinken, "panorama/images/items/branches_png.vtex_c")
@@ -379,6 +416,11 @@ function AllInOne.Init( ... )
 		local w,h = Renderer.GetScreenSize()
 		x = Config.ReadInt("KAIO", "arcPanelX", w/2)
 		y = Config.ReadInt("KAIO", "arcPanelY", h/2)
+	elseif NPC.GetUnitName(myHero) == "npc_dota_hero_windrunner" then
+		comboHero = "Windrunner"
+		q = NPC.GetAbilityByIndex(myHero, 0)
+		e = NPC.GetAbilityByIndex(myHero, 2)
+		r = NPC.GetAbility(myHero, "windrunner_focusfire")	
 	else	
 		myHero = nil
 		return	
@@ -430,6 +472,8 @@ function AllInOne.ClearVar( ... )
 	necro = nil
 	manta = nil
 	silver = nil
+	branch = nil
+	mom = nil
 end
 function AllInOne.cloneClearVar( ... )
 	clone_hex = nil
@@ -446,6 +490,7 @@ function AllInOne.cloneClearVar( ... )
 	clone_necro = nil
 	clone_boots = nil
 	clone_silver = nil
+	clone_mom = nil
 end
 function AllInOne.OnUpdate( ... )
 	if not myHero then return end
@@ -503,13 +548,15 @@ function AllInOne.OnUpdate( ... )
 					elseif name == "item_necronomicon"	 or name == "item_necronomicon_2" or name == "item_necronomicon_3" then
 						clone_necro = item
 					elseif name == "item_silver_edge" then
-						clone_silver = item	
+						clone_silver = item
+					elseif name == "item_mask_of_madness" then
+						clone_mom = item
 					end	 
 				end
 			end
 		end
 		if Menu.IsKeyDown(AllInOne.optionArcMainComboKey) then
-			if Menu.GetValue(AllInOne.optionArcTargetStyle) == 0 and not enemy then
+			if Menu.GetValue(AllInOne.optionArcTargetStyle) == 0 and (not enemy or not Entity.IsAlive(enemy)) then
 				enemy = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
 			elseif Menu.GetValue(AllInOne.optionArcTargetStyle) == 1 then
 				enemy = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
@@ -519,7 +566,7 @@ function AllInOne.OnUpdate( ... )
 				AllInOne.ArcCombo()
 			end
 		elseif Menu.IsKeyDown(AllInOne.optionArcCloneComboKey) then
-			if Menu.GetValue(AllInOne.optionArcTargetStyle) == 0 and not clone_target then
+			if Menu.GetValue(AllInOne.optionArcTargetStyle) == 0 and (not clone_target or not Entity.IsAlive(clone_target)) then
 				clone_target = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
 			elseif Menu.GetValue(AllInOne.optionArcTargetStyle) == 1 then
 				clone_target = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
@@ -644,6 +691,21 @@ function AllInOne.OnUpdate( ... )
 		if Menu.IsKeyDown(AllInOne.optionTinkerSpamKey) then
 			AllInOne.TinkerSpamRockets()
 		end
+	elseif comboHero == "Windrunner" and Menu.IsEnabled(AllInOne.optionWindrunnerEnable) then
+		if Menu.IsKeyDown(AllInOne.optionWindrunnerComboKey) then
+			if Menu.GetValue(AllInOne.optionWindrunnerTargetStyle) == 1 and not enemy then
+				enemy = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
+			elseif Menu.GetValue(AllInOne.optionWindrunnerTargetStyle) == 0 then
+				enemy = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
+			end
+			if enemy and Entity.IsAlive(enemy) then
+				enemyPosition = Entity.GetAbsOrigin(enemy)
+				AllInOne.WindrunnerCombo()
+			end
+		end
+		if Ability.IsCastable(q, myMana) and Entity.GetHeroesInRadius(myHero, Ability.GetCastRange(q), Enum.TeamType.TEAM_ENEMY) and Menu.IsEnabled(AllInOne.optionWindrunnerDrawShackle) then
+			AllInOne.WindrunnerDrawInfo(Entity.GetHeroesInRadius(myHero, Ability.GetCastRange(q), Enum.TeamType.TEAM_ENEMY))
+		end
 	end
 	AllInOne.ClearVar()
 	for i = 0, 5 do
@@ -712,6 +774,10 @@ function AllInOne.OnUpdate( ... )
 				necro = item
 			elseif name == "item_silver_edge" then
 				silver = item
+			elseif name == "item_branches" then
+				branch = item
+			elseif name == "item_mask_of_madness" then
+				mom = item
 			end
 		end
 	end
@@ -1369,7 +1435,7 @@ function AllInOne.ArcCloneCombo(target, bool)
 				return
 			end	
 		end
-		if clone_silver and Menu.IsEnabled(AllInOne.optionArcEnableSilver) and Ability.IsCastable(clone_silver, clone_mana) then
+		if clone_silver and Menu.IsEnabled(AllInOne.optionArcEnableSilverClone) and Ability.IsCastable(clone_silver, clone_mana) then
 			Ability.CastNoTarget(clone_silver)
 			needTime2 = time + 0.3 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)*3
 			needAttack = true
@@ -1498,6 +1564,11 @@ function AllInOne.ArcCloneCombo(target, bool)
 		if clone_e and time >= needTime2 and Ability.IsCastable(clone_e, clone_mana) and Menu.IsEnabled(AllInOne.optionArcEnableSpark) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
 			Ability.CastPosition(clone_e, AllInOne.castPrediction(target,1.5))
 			needTime2 = time + 0.35 + Ability.GetCastPoint(clone_e)*3 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+		end
+		if clone_mom and time >= needTime2 and Ability.IsCastable(clone_mom, clone_mana) and Menu.IsEnabled(AllInOne.optionArcEnableMom) then
+			Ability.CastNoTarget(clone_mom)
+			needTime2 = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+			return
 		end
 	end
 	if #mantaTable > 1 and time >= needTime2 then
@@ -1664,6 +1735,11 @@ function AllInOne.ArcCombo( ... )
 	if Ability.IsCastable(e, myMana) and time >= needTime and Menu.IsEnabled(AllInOne.optionArcEnableSpark) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
 		Ability.CastPosition(e, AllInOne.castPrediction(enemy,1.5))
 		needTime = time + 0.1 + Ability.GetCastPoint(e) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+	end
+	if mom and Ability.IsCastable(mom, myMana) and Menu.IsEnabled(AllInOne.optionArcEnableMom) and time >= needTime then
+		Ability.CastNoTarget(mom)
+		needTime = time + 0.1 + Ability.GetCastPoint(e) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+		return
 	end
 	if #mantaTable > 1 and time >= needTime then
 		AllInOne.MantaController("attack", enemy)
@@ -2240,6 +2316,24 @@ function AllInOne.OnDraw( ... )
 			Renderer.DrawOutlineRect(x2,y2,15,15)
 		end
 	end
+	if comboHero == "Windrunner" and Menu.IsEnabled(AllInOne.optionWindrunnerDrawShackle) and Ability.IsReady(q) then
+		for i = 1, Heroes.Count() do
+			local hero = Heroes.Get(i)
+			if Entity.IsAlive(hero) and Entity.IsAlive(myHero) then
+				if canBeShackled[hero] then
+					if not NPC.IsEntityInRange(myHero, hero, Ability.GetCastRange(q)) then
+						canBeShackled[hero] = false
+					end
+					local xcoord, ycoord, vis = Renderer.WorldToScreen(Entity.GetAbsOrigin(hero))
+					ycoord = ycoord - 50
+					if vis then
+						Renderer.SetDrawColor(0,255,0)
+						Renderer.DrawText(wrFont, xcoord, ycoord, "SHACKLESHOT")
+					end
+				end
+			end
+		end
+	end
 end
 function AllInOne.GetMoveSpeed(ent)
 	local baseSpeed = NPC.GetBaseSpeed(ent)
@@ -2598,6 +2692,373 @@ function AllInOne.ClinkzCombo( ... )
 		end
 	end
 	Player.AttackTarget(myPlayer, myHero, enemy)
+end
+function AllInOne.WindrunnerCombo( ... )
+	if not enemy or not NPC.IsEntityInRange(myHero, enemy, 3000) then
+		enemy = nil
+		return
+	end
+	if Menu.IsEnabled(AllInOne.optionWindrunnerCheckBM) and (NPC.HasModifier(enemy, "modifier_item_blade_mail_reflect") or NPC.HasModifier(enemy, "modifier_item_lotus_orb_active")) then
+		return
+	end
+	if Ability.IsCastable(q, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableShackle) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if AllInOne.getEnemyBeShackledWithNPC(enemy) then
+			Ability.CastTarget(q, AllInOne.getEnemyBeShackledWithNPC(enemy))
+			return
+		elseif AllInOne.canEnemyBeShackledWithTree(enemy) then
+			Ability.CastTarget(q, enemy)
+			return
+		else
+			if AllInOne.getEnemyShackledBestPosition(enemy, 750):__tostring() ~= Vector(0,0,0):__tostring() then
+				if blink and Ability.IsCastable(blink, 0) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableBlink) then
+					Ability.CastPosition(blink, AllInOne.getEnemyShackledBestPosition(enemy, 1150))
+					return
+				end	
+			end
+		end
+	end
+	if not AllInOne.getEnemyBeShackledWithNPC(enemy) and not AllInOne.canEnemyBeShackledWithTree(enemy) and AllInOne.getEnemyShackledBestPosition(enemy, 750):__tostring() == Vector(0,0,0):__tostring() then
+		if Menu.IsEnabled(AllInOne.optionWindrunnerEnableBranches) then
+			if branch and NPC.IsEntityInRange(myHero, enemy, 750) then
+				if blink and Ability.IsCastable(blink, 0) then
+					if q and Ability.IsCastable(q, myMana) then
+						Ability.CastTarget(q, enemy)
+						return
+					end
+					if not Ability.IsReady(q) then
+						Ability.CastPosition(blink, enemyPosition + (enemyPosition - myPos):Rotated(45):Normalized():Scaled(200))
+						Ability.CastPosition(branch, enemyPosition + (enemyPosition - myPos):Normalized():Scaled(150))
+						return
+					end
+				end
+			end
+		end	
+	end
+	if bkb and Ability.IsCastable(bkb, 0) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableBkb) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and time >= nextTick then
+		Ability.CastNoTarget(bkb)
+		nextTick = time + 0.05
+		return
+	end
+	if hex and Ability.IsCastable(hex, myMana) and time >= nextTick and Menu.IsEnabled(AllInOne.optionWindrunnerEnableHex) and NPC.IsEntityInRange(myHero, enemy, Ability.GetCastRange(hex)) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+		if Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) then
+			if NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+				local modHex = NPC.GetModifier(enemy, "modifier_sheepstick_debuff")
+				if not modHex then
+					modHex = NPC.GetModifier(enemy, "modifier_shadow_shaman_voodoo")
+				end
+				if not modHex then
+					modHex = NPC.GetModifier(enemy, "modifier_lion_voodoo")
+				end
+				if modHex then
+					local dieTime = Modifier.GetDieTime(modHex)
+					if dieTime - time <= 0.85 then
+						Ability.CastTarget(hex,enemy)
+						nextTick = time + 0.05 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+						return
+					end
+				end
+			else	
+				Ability.CastTarget(hex, enemy)
+				nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+				return
+			end
+		else
+			Ability.CastTarget(hex, enemy)
+			nextTick = time + 0.05
+			return
+		end	
+	end
+	if nullifier and Ability.IsCastable(nullifier, myMana) and time >= nextTick and Menu.IsEnabled(AllInOne.optionWindrunnerEnableNullifier) and NPC.IsEntityInRange(myHero, enemy, Ability.GetCastRange(nullifier)) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+		if NPC.GetItem(enemy, "item_aeon_disk", true) then
+			if NPC.HasModifier(enemy, "modifier_item_aeon_disk_buff") or not Ability.IsReady(NPC.GetItem(enemy, "item_aeon_disk", true)) then
+				Ability.CastTarget(nullifier,enemy)
+				needTime = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+				return
+			end
+		else
+			if NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) then
+				local modHex = NPC.GetModifier(enemy, "modifier_sheepstick_debuff")
+				if not modHex then
+					modHex = NPC.GetModifier(enemy, "modifier_shadow_shaman_voodoo")
+				end
+				if not modHex then
+					modHex = NPC.GetModifier(enemy, "modifier_lion_voodoo")
+				end
+				if modHex then
+					local dieTime = Modifier.GetDieTime(modHex)
+					if dieTime - time <= (enemyPosition-myPos):Length()/750 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) then
+						Ability.CastTarget(nullifier,enemy)
+						nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+						return
+					end
+				end
+			elseif Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+				Ability.CastTarget(nullifier, enemy)
+				nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+				return	
+			elseif not Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) then
+				Ability.CastTarget(nullifier, enemy)
+				nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+				return
+			end
+		end
+	end
+	if bloodthorn and Ability.IsCastable(bloodthorn, myMana) and time >= nextTick and Menu.IsEnabled(AllInOne.optionWindrunnerEnableBlood) and NPC.IsEntityInRange(myHero, enemy, Ability.GetCastRange(bloodthorn)) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+		if Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) then
+			if not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_SILENCED) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+				Ability.CastTarget(bloodthorn, enemy)
+				nextTick = time + 0.05
+				return
+			end
+		else	
+			Ability.CastTarget(bloodthorn, enemy)
+			nextTick = time + 0.05
+			return
+		end
+	end
+	if orchid and Ability.IsCastable(orchid, myMana) and time >= nextTick and Menu.IsEnabled(AllInOne.optionWindrunnerEnableOrchid) and NPC.IsEntityInRange(myHero, enemy, Ability.GetCastRange(orchid)) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+		if Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) then
+			if not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_SILENCED) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+				Ability.CastTarget(orchid, enemy)
+				nextTick = time + 0.05
+				return
+			end
+		else	
+			Ability.CastTarget(orchid, enemy)
+			nextTick = time + 0.05
+			return
+		end
+	end
+	if diffusal and time >= nextTick and Menu.IsEnabled(AllInOne.optionWindrunnerEnableDiffusal) and Ability.IsCastable(diffusal, 0) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+		if Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) and not NPC.HasModifier(enemy, "modifier_item_diffusal_blade_slow") and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+			Ability.CastTarget(diffusal, enemy)
+			nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+			return
+		elseif not Menu.IsEnabled(AllInOne.optionWindrunnerDebuffUnstack) then
+			Ability.CastTarget(diffusal, enemy)
+			nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+			return
+		end	
+	end
+	if e and Ability.IsCastable(e, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableWindrun) then
+		local count
+		local tempTable = Entity.GetHeroesInRadius(myHero, 600, Enum.TeamType.TEAM_ENEMY)
+		if tempTable then
+			count = #tempTable
+		else
+			count = 0
+		end	
+		if count >= Menu.GetValue(AllInOne.optionWindrunnerWindrunMinimumHeroAround) then
+			Ability.CastNoTarget(e)
+			nextTick = time + 0.05
+			return
+		end
+	end
+	if Ability.IsCastable(r, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableFocusFire) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_ATTACK_IMMUNE) then
+		Ability.CastTarget(r, enemy)
+		nextTick = time + 0.05
+		return
+	end
+	if time >= needTime then
+		Player.AttackTarget(myPlayer, myHero, enemy)
+		needTime = time + 0.275
+	end
+end
+function AllInOne.WindrunnerDrawInfo(heroTable) 
+	if not myHero or not Entity.IsAlive(myHero) or not heroTable then
+		return
+	end
+	for i, k in pairs(heroTable) do
+		if k and not NPC.HasState(k, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+			if AllInOne.getEnemyBeShackledWithNPC(k) or AllInOne.canEnemyBeShackledWithTree(k) then
+				canBeShackled[k] = true
+			else
+				canBeShackled[k] = false	
+			end
+		end
+	end
+end
+function AllInOne.getEnemyShackledBestPosition(enemy, dist)
+	if not dist then return Vector() end
+	local shackleSearchRange = 575
+	local shackleCastRange = 785
+	local enemyPos1 = AllInOne.castPrediction(enemy, 0.15 + (NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2))
+	local directLineVector = enemyPos1 + (enemyPos1 - Entity.GetAbsOrigin(myHero)):Normalized():Scaled(shackleSearchRange)
+	local shacklePos = Vector(0,0,0)
+	local minDis = 99999
+	local minCreepDis = 99999
+	if not AllInOne.canEnemyBeShackledWithTree(enemy) and not AllInOne.getEnemyBeShackledWithNPC(enemy) then
+		local npcs = Entity.GetUnitsInRadius(enemy, shackleSearchRange, Enum.TeamType.TEAM_FRIEND)
+		if npcs then
+			for _, targetNPC in ipairs(npcs) do
+				if targetNPC then
+					local myDisToEnemy = (Entity.GetAbsOrigin(myHero) - enemyPos1):Length2D()
+					local myDisToNPC = (Entity.GetAbsOrigin(myHero) - Entity.GetAbsOrigin(targetNPC)):Length2D()
+					local enemyDisToNPC = (enemyPos1 - Entity.GetAbsOrigin(targetNPC)):Length2D()
+					
+					if myDisToEnemy < myDisToNPC then
+						local vectorNPCtoEnemy = enemyPos1 - Entity.GetAbsOrigin(targetNPC)
+						local searchVec = Entity.GetAbsOrigin(targetNPC) + vectorNPCtoEnemy:Normalized():Scaled(vectorNPCtoEnemy:Length2D() + 250)
+						local myDisToSearchPos = (searchVec - Entity.GetAbsOrigin(myHero)):Length2D()
+						if not Trees.InRadius(searchVec, 300, true) and not Heroes.InRadius(searchVec, 150, myTeam, Enum.TeamType.TEAM_ENEMY) then
+							if myDisToSearchPos < minDis then
+								shacklePos = searchVec
+								minDis = myDisToSearchPos
+							end
+						end
+					else
+						local vectorEnemyToNPC = Entity.GetAbsOrigin(targetNPC) - enemyPos1
+						local searchVec = enemyPos1 + vectorEnemyToNPC:Normalized():Scaled(vectorEnemyToNPC:Length2D() + 250)
+						local myDisToSearchPos = (searchVec - Entity.GetAbsOrigin(myHero)):Length2D()
+						if not Trees.InRadius(searchVec, 300, true) and not Heroes.InRadius(searchVec, 150, myTeam, Enum.TeamType.TEAM_ENEMY) then
+							if myDisToSearchPos < minDis and vectorEnemyToNPC:Length2D() < minCreepDis then
+								shacklePos = searchVec
+								minDis = myDisToSearchPos
+								minCreepDis = vectorEnemyToNPC:Length2D()
+							end
+						end
+					end
+				end
+			end
+		end
+		if shacklePos:__tostring() == Vector(0,0,0):__tostring() then
+			if next(AllInOne.getEnemyShackleTrees(enemy)) then
+				for _, targetTree in ipairs(AllInOne.getEnemyShackleTrees(enemy)) do
+					if targetTree then
+						local vectorTreeToEnemy = enemyPos1 - Entity.GetAbsOrigin(targetTree)
+						local searchVec = Entity.GetAbsOrigin(targetTree) + vectorTreeToEnemy:Normalized():Scaled(vectorTreeToEnemy:Length2D() + 350)
+						local myDisToSearchPos = (searchVec - Entity.GetAbsOrigin(myHero)):Length2D()
+						if not Trees.InRadius(searchVec, 300, true) and not Heroes.InRadius(searchVec, 300, myTeam, Enum.TeamType.TEAM_ENEMY) then
+							if myDisToSearchPos < minDis then
+								shacklePos = searchVec
+								minDis = myDisToSearchPos
+							end
+						end
+					end
+				end
+			end	
+		end
+	end
+	if shacklePos:__tostring() ~= Vector():__tostring() and minDis < dist then
+		return shacklePos
+	end
+	return Vector(0,0,0)
+end
+function AllInOne.getEnemyShackleTrees(enemy)
+	local shackleSearchRange = 575
+	local enemyPos1 = AllInOne.castPrediction(enemy, 0.15 + (NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2))
+
+	local trees = Trees.InRadius(enemyPos1, shackleSearchRange, true)
+	local returnTrees = {}
+	if trees then
+		for _, targetTree in ipairs(trees) do		
+			if targetTree then
+				table.insert(returnTrees, targetTree)
+			end
+		end
+	else
+		return {}
+	end	
+
+	if next(returnTrees) ~= nil then
+		return returnTrees
+	end
+	return {}
+
+end
+function AllInOne.getEnemyBeShackledWithNPC(npc)
+	local shackleSearchRange = 575
+	local shackleCastRange = 785
+	local enemyPos1 = AllInOne.castPrediction(npc, 0.15 + (NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2))
+	local directLineVector = enemyPos1 + (enemyPos1 - Entity.GetAbsOrigin(myHero)):Normalized():Scaled(shackleSearchRange)
+	local npcs = Entity.GetUnitsInRadius(npc, shackleSearchRange, Enum.TeamType.TEAM_FRIEND)
+	local shackleNPC
+	local minAngle = 180
+	local minRange = 99999	
+	if npcs then
+		for _, targetNPC in ipairs(npcs) do
+			if targetNPC then
+				local myDisToEnemy = (Entity.GetAbsOrigin(myHero) - enemyPos1):Length2D()
+				local myDisToNPC = (Entity.GetAbsOrigin(myHero) - Entity.GetAbsOrigin(targetNPC)):Length2D()
+				local enemyDisToNPC = (enemyPos1 - Entity.GetAbsOrigin(targetNPC)):Length2D()
+				if myDisToEnemy < myDisToNPC then
+					if myDisToEnemy < shackleCastRange then
+						local vectorEnemyToNPC = Entity.GetAbsOrigin(targetNPC) - enemyPos1
+						local vectormyHerotoEnemy = enemyPos1 - Entity.GetAbsOrigin(myHero)
+						local tempProcessing = vectormyHerotoEnemy:Dot2D(vectorEnemyToNPC) / (vectormyHerotoEnemy:Length2D() * vectorEnemyToNPC:Length2D())
+							if tempProcessing > 1 then
+								tempProcessing = 1
+							end	
+						local searchAngleRad = math.acos(tempProcessing)
+						local searchAngle = (180 / math.pi) * searchAngleRad
+						if searchAngle < minAngle then
+							shackleNPC = npc
+							minAngle = searchAngle
+						end
+					end
+				else
+					if myDisToNPC < shackleCastRange then
+						local vectorNPCToEnemy = enemyPos1 - Entity.GetAbsOrigin(targetNPC)
+						local vectormyHerotoNPC = Entity.GetAbsOrigin(targetNPC) - Entity.GetAbsOrigin(myHero)
+						local tempProcessing = vectormyHerotoNPC:Dot2D(vectorNPCToEnemy) / (vectormyHerotoNPC:Length2D() * vectorNPCToEnemy:Length2D())
+							if tempProcessing > 1 then
+								tempProcessing = 1
+							end	
+						local searchAngleRad = math.acos(tempProcessing)
+						local searchAngle = (180 / math.pi) * searchAngleRad
+						if searchAngle < minAngle and vectorNPCToEnemy:Length2D() < minRange then
+							shackleNPC = targetNPC
+							minAngle = searchAngle
+							minRange = vectorNPCToEnemy:Length2D()
+						end
+					end
+				end
+			end
+		end
+		if shackleNPC and minAngle < 23 then
+			return shackleNPC
+		end
+	end	
+	return false
+end
+function AllInOne.canEnemyBeShackledWithTree(npc)
+	local shackleSearchRange = 575
+	local shackleCastRange = 785
+	local enemyPos1 = AllInOne.castPrediction(npc, 0.15 + (NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2))
+	local directLineVector = enemyPos1 + (enemyPos1 - Entity.GetAbsOrigin(myHero)):Normalized():Scaled(shackleSearchRange)
+	local trees = Trees.InRadius(directLineVector, shackleSearchRange, true)
+	local shackleTree
+	local minAngle = 180
+	if trees then
+		for _, targetTree in ipairs(trees) do		
+			if targetTree then
+				local myDisToEnemy = (myPos - enemyPos1):Length2D()
+				local enemyDisToTree = (enemyPos1 - Entity.GetAbsOrigin(targetTree)):Length2D()
+				if myDisToEnemy < shackleCastRange then
+					if enemyDisToTree < shackleSearchRange then
+						if targetTree ~= nil then
+							local vectorEnemyToTree = Entity.GetAbsOrigin(targetTree) - enemyPos1
+							local vectormyHerotoEnemy = enemyPos1 - myPos
+							local tempProcessing = vectormyHerotoEnemy:Dot2D(vectorEnemyToTree) / (vectormyHerotoEnemy:Length2D() * vectorEnemyToTree:Length2D())
+							if tempProcessing > 1 then
+								tempProcessing = 1
+							end
+							local searchAngleRad = math.acos(tempProcessing)
+							local searchAngle = (180 / math.pi) * searchAngleRad
+							if searchAngle < minAngle then
+								shackleTree = targetTree
+								minAngle = searchAngle
+							end
+						end
+					end
+				end
+			end
+		end
+		if shackleTree and minAngle < 23 then
+			return true
+		end
+	end
+	return false
 end
 function AllInOne.IsLinkensProtected()
 	if NPC.IsLinkensProtected(enemy) then
