@@ -152,6 +152,8 @@ Menu.AddMenuIcon({"KAIO", "Hero Specific", "Lion"}, "panorama/images/heroes/icon
 Menu.AddOptionIcon(AllInOne.optionLionEnable, "panorama/images/items/branches_png.vtex_c")
 AllInOne.optionLionComboKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Lion"}, "Combo Key", Enum.ButtonCode.KEY_Z)
 AllInOne.optionLionComboRadius = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Lion"}, "Safe Radius for Blink", 0, 600, 250)
+AllInOne.optionLionPoopLinkenManaDrain = Menu.AddOptionBool({"KAIO", "Hero Specific", "Lion"}, "Poop Linken with Mana Drain", false)
+Menu.AddOptionIcon(AllInOne.optionLionPoopLinkenManaDrain, "panorama/images/spellicons/lion_mana_drain_png.vtex_c")
 AllInOne.optionLionEnableSpike = Menu.AddOptionBool({"KAIO", "Hero Specific", "Lion", "Skills"}, "Earth Spike", false)
 Menu.AddOptionIcon(AllInOne.optionLionEnableSpike, "panorama/images/spellicons/lion_impale_png.vtex_c")
 AllInOne.optionLionEnableHex = Menu.AddOptionBool({"KAIO", "Hero Specific", "Lion", "Skills"}, "Hex", false)
@@ -401,6 +403,7 @@ function AllInOne.Init( ... )
 		comboHero = "Lion"
 		q = NPC.GetAbilityByIndex(myHero,0)
 		w = NPC.GetAbilityByIndex(myHero, 1)
+		e = NPC.GetAbility(myHero, "lion_mana_drain")
 		r = NPC.GetAbility(myHero, "lion_finger_of_death")
 	elseif NPC.GetUnitName(myHero) == "npc_dota_hero_tinker" then
 		comboHero = "Tinker"
@@ -1889,7 +1892,11 @@ function AllInOne.LionCombo( ... )
 		return
 	end
 	if NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
-		AllInOne.PoopLinken()
+		if Menu.IsEnabled(AllInOne.optionLionPoopLinkenManaDrain) and Ability.IsCastable(e, myMana) then
+			Ability.CastTarget(e, enemy)
+		else
+			AllInOne.PoopLinken()	
+		end	
 	end
 	if w and not added and Menu.IsEnabled(AllInOne.optionLionEnableHex) and Ability.IsCastable(w, myMana) and NPC.IsEntityInRange(myHero, enemy, Ability.GetCastRange(w)*1.5) then
 		if NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
@@ -2701,6 +2708,9 @@ function AllInOne.WindrunnerCombo( ... )
 	if Menu.IsEnabled(AllInOne.optionWindrunnerCheckBM) and (NPC.HasModifier(enemy, "modifier_item_blade_mail_reflect") or NPC.HasModifier(enemy, "modifier_item_lotus_orb_active")) then
 		return
 	end
+	if NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
+		AllInOne.PoopLinken()
+	end
 	if Ability.IsCastable(q, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableShackle) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 		if AllInOne.getEnemyBeShackledWithNPC(enemy) then
 			Ability.CastTarget(q, AllInOne.getEnemyBeShackledWithNPC(enemy))
@@ -2854,7 +2864,7 @@ function AllInOne.WindrunnerCombo( ... )
 			return
 		end
 	end
-	if Ability.IsCastable(r, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableFocusFire) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_ATTACK_IMMUNE) then
+	if Ability.IsCastable(r, myMana) and not NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableFocusFire) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_ATTACK_IMMUNE) then
 		Ability.CastTarget(r, enemy)
 		nextTick = time + 0.05
 		return
