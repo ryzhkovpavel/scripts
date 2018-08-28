@@ -98,7 +98,7 @@ function MPHPAbuse.OnGameStart()
 end
 function MPHPAbuse.Init()
 	myHero = Heroes.GetLocal()
-	myPlayer
+	myPlayer = Players.GetLocal()
 	x, y = Renderer.GetScreenSize()
 	x = x * 0.59
 	y = y * 0.8426
