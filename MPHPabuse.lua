@@ -1,6 +1,7 @@
 local MPHPAbuse = {}
 MPHPAbuse.optionEnable = Menu.AddOptionBool({"Utility", "MP/HP Abuse"}, "Enable", false)
 MPHPAbuse.optionToggleKey = Menu.AddKeyOption({"Utility", "MP/HP Abuse"}, "Toggle Key", Enum.ButtonCode.KEY_N)
+MPHPAbuse.optionBackPackAbuseKey = Menu.AddKeyOption({"Utility", "MP/HP Abuse"}, "Key to quick abuse items to backpack", Enum.ButtonCode.KEY_Y)
 MPHPAbuse.threshold = Menu.AddOptionSlider({"Utility", "MP/HP Abuse"}, "HP Percent Threshold", 0, 100, 5)
 MPHPAbuse.font = Renderer.LoadFont("Tahoma", 18, Enum.FontWeight.BOLD)
 MPHPAbuse.items = {
@@ -89,7 +90,9 @@ local changed = false
 local dropped = 0
 local toggled = false
 local needSwap = false
+local time
 local nextTick = 0
+local nextTick2 = 0
 local x,y
 local myHero, myPlayer
 MPHPAbuse.itemsSlots = {}
@@ -99,6 +102,8 @@ end
 function MPHPAbuse.Init()
 	myHero = Heroes.GetLocal()
 	myPlayer = Players.GetLocal()
+	nextTick = 0
+	nextTick2 = 0
 	x, y = Renderer.GetScreenSize()
 	x = x * 0.59
 	y = y * 0.8426
@@ -110,15 +115,15 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 	if Entity.GetHealth(myHero)/Entity.GetMaxHealth(myHero) < Menu.GetValue(MPHPAbuse.threshold)/100 then return end
 	if orders.order ~= 8 then return end
 	if Entity.IsAlive(myHero) and not NPC.IsStunned(myHero) then
-		local name = Ability.GetName(orders.ability)
-			if MPHPAbuse.items[name] then
-				if MPHPAbuse.dropItems[name] == true then
-					changed = true
-					MPHPAbuse.dropItems[name] = false
-				end
-				for i = 0, 5 do
-					local item = NPC.GetItemByIndex(myHero, i)
-					if item ~= 0 then
+	local name = Ability.GetName(orders.ability)
+		if MPHPAbuse.items[name] then
+			if MPHPAbuse.dropItems[name] == true then
+				changed = true
+				MPHPAbuse.dropItems[name] = false
+			end
+			for i = 0, 5 do
+				local item = NPC.GetItemByIndex(myHero, i)
+				if item ~= 0 then
 					local itemName = Ability.GetName(item)
 					if MPHPAbuse.dropItems[itemName] then
 						MPHPAbuse.itemsSlots[itemName] = i			
@@ -134,9 +139,23 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 		end
 	end
 end
+function MPHPAbuse.AbuseBackPack( ... )
+	for i = 0, 5 do
+		local item = NPC.GetItemByIndex(myHero, i)
+		if item ~= 0 and MPHPAbuse.dropItems[Ability.GetName(item)] then
+			MPHPAbuse.itemsSlots[Ability.GetName(item)] = i
+			MPHPAbuse.moveItem(item, 6)
+		end
+		if i == 5 then
+			nextTick = time + 0.35 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+			needSwap = true
+		end
+	end
+end
 function MPHPAbuse.OnUpdate()
 	if not Menu.IsEnabled(MPHPAbuse.optionEnable) then return end
-	if not myHero then return end	
+	if not myHero then return end
+	time = GameRules.GetGameTime()
 	if Menu.IsKeyDownOnce(MPHPAbuse.optionToggleKey) then
 		if toggled == false then
 			toggled = true
@@ -144,8 +163,12 @@ function MPHPAbuse.OnUpdate()
 			toggled = false	
 		end	
 	end
-	if needSwap and GameRules.GetGameTime() >= nextTick then
-		for i = 0, 5 do
+	if Menu.IsKeyDownOnce(MPHPAbuse.optionBackPackAbuseKey) and time >= nextTick2 then
+		MPHPAbuse.AbuseBackPack()
+		nextTick2 = time + 1
+	end
+	if needSwap and time >= nextTick then
+		for i = 0, 8 do
 			local item = NPC.GetItemByIndex(myHero, i)
 			if item and item ~= 0 then
 				if MPHPAbuse.itemsSlots[Ability.GetName(item)] then
@@ -176,7 +199,7 @@ function MPHPAbuse.OnEntityCreate(ent)
 		dropped = dropped - 1
 		if dropped == 0 then
 			needSwap = true
-			nextTick = GameRules.GetGameTime() + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+			nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 		end
 	end
 end
