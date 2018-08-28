@@ -1,8 +1,6 @@
 local notification = {}
 notification.optionEnable = Menu.AddOptionBool({"Awareness", "Notification"}, "Enable", false)
 notification.optionRoshDrawInfo = Menu.AddOptionBool({"Awareness", "Notification"}, "Draw Rosh State", true)
-notification.optionSoundAlert = Menu.AddOptionBool({"Awareness", "Notification"}, "Sound Alert", true)
-notification.optionSoundVolume = Menu.AddOptionSlider({"Awareness", "Notification"}, "Sound Alert Volume", 1, 10, 3)
 notification.optionChatAlertEnable = Menu.AddOptionBool({"Awareness", "Notification", "Chat Alert"}, "Enable", true)
 notification.optionBaraAlertEnable = Menu.AddOptionBool({"Awareness", "Notification", "Chat Alert"}, "Bara Alert", true)
 notification.optionSkillAlertEnable = Menu.AddOptionBool({"Awareness", "Notification", "Chat Alert"}, "Skill Alert", true)
@@ -147,6 +145,7 @@ local language
 local roshTick = 0
 local nextTick = 0
 local checkTick = 0
+local tempEnt, aegisEnt
 function notification.Init( ... )
 	myHero = Heroes.GetLocal()
 	myPlayer = Players.GetLocal()
@@ -159,6 +158,7 @@ function notification.Init( ... )
 	mirana = false
 	nyx = false
 	bara = false
+	tempEnt = nil
 	eventTable = {}
 	if not myHero then return end
 	x, y = Renderer.GetScreenSize()
@@ -175,6 +175,12 @@ end
 function notification.OnUpdate( ... )
 	if not myHero or not Menu.IsEnabled(notification.optionEnable) then return end
 	time = GameRules.GetGameTime()
+	if tempEnt then
+		if Ability.GetName(PhysicalItem.GetItem(tempEnt)) == "item_aegis" then
+			aegisEnt = tempEnt
+		end
+		tempEnt = nil
+	end
 	if time >= checkTick then
 		for i = 1, Heroes.Count() do
 			local k = Heroes.Get(i)
@@ -210,6 +216,17 @@ function notification.OnUpdate( ... )
 	end
 	if Menu.IsEnabled(notification.optionChatAlertEnable) and Menu.IsEnabled(notification.optionBaraAlertEnable) and bara then
 		notification.baraAlert()
+	end
+end
+function notification.OnEntityCreate(ent)
+	if Entity.GetClassName(ent) == "C_DOTA_Item_Physical" then
+		tempEnt = ent
+	end
+end
+function notification.OnEntityDestroy(ent)
+	if ent == aegisEnt then
+		eventTable["roshDead"] = time
+		aegisEnt = nil
 	end
 end
 function notification.OnDraw( ... )
@@ -333,9 +350,6 @@ function notification.OnParticleCreate(particle)
 			end
 		end
 		if particle.name == "roshan_spawn" then
-			if Menu.IsEnabled(notification.optionSoundAlert) then
-				Engine.ExecuteCommand("playvol sounds/ui/stingers/notification_alert.vsnd_c "..Menu.GetValue(notification.optionSoundVolume))
-			end
 			if Menu.IsEnabled(notification.optionRoshAlertEnable) then
 				if language == 0 then
 					Engine.ExecuteCommand("say_team Рошан реснулся")
@@ -380,13 +394,9 @@ function notification.OnParticleCreate(particle)
 				end
 			end
 			roshAlive = false
-			eventTable["roshDead"] = time
 		end
 	end
 	if particle.name == "nyx_assassin_vendetta_start" and nyx then
-		if Menu.IsEnabled(notification.optionSoundAlert) then
-			Engine.ExecuteCommand("playvol sounds/ui/stingers/notification_alert.vsnd_c "..Menu.GetValue(notification.optionSoundVolume))
-		end
 		if Menu.IsEnabled(notification.optionChatAlertEnable) and Menu.IsEnabled(notification.optionSkillAlertEnable) then
 			if language == 0 then
 				Engine.ExecuteCommand("say_team Nyx использовал ультимейт")
@@ -400,9 +410,6 @@ function notification.OnParticleCreate(particle)
 		idTable[particle.index] = time + notification.getVendettaDuration()
 	end
 	if particle.name == "mirana_moonlight_recipient" and mirana then
-		if Menu.IsEnabled(notification.optionSoundAlert) then
-			Engine.ExecuteCommand("playvol sounds/ui/stingers/notification_alert.vsnd_c "..Menu.GetValue(notification.optionSoundVolume))
-		end
 		if Menu.IsEnabled(notification.optionChatAlertEnable) and Menu.IsEnabled(notification.optionSkillAlertEnable) then
 			if language == 0 then
 				Engine.ExecuteCommand("say_team Вражеская мирана использовала ультимейт")
@@ -415,9 +422,6 @@ function notification.OnParticleCreate(particle)
 		eventTable["moonlight"] = time + 18
 	end
 	if particle.name == "smoke_of_deceit" then
-		if Menu.IsEnabled(notification.optionSoundAlert) then
-			Engine.ExecuteCommand("playvol sounds/ui/stingers/notification_alert.vsnd_c "..Menu.GetValue(notification.optionSoundVolume))
-		end
 		if Menu.IsEnabled(notification.optionChatAlertEnable) and Menu.IsEnabled(notification.optionSkillAlertEnable) then
 			if language == 0 then
 				Engine.ExecuteCommand("say_team Кто-то использовал смок")
