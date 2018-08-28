@@ -1,4 +1,8 @@
 local MPHPAbuse = {}
+MPHPAbuse.optionEnable = Menu.AddOptionBool({"Utility", "MP/HP Abuse"}, "Enable", false)
+MPHPAbuse.optionToggleKey = Menu.AddKeyOption({"Utility", "MP/HP Abuse"}, "Toggle Key", Enum.ButtonCode.KEY_N)
+MPHPAbuse.threshold = Menu.AddOptionSlider({"Utility", "MP/HP Abuse"}, "HP Percent Threshold", 0, 100, 5)
+MPHPAbuse.font = Renderer.LoadFont("Tahoma", 18, Enum.FontWeight.BOLD)
 MPHPAbuse.items = {
 	item_soul_ring = true,
 	item_arcane_boots = true,
@@ -84,24 +88,21 @@ MPHPAbuse.dropItems = {
 local changed = false
 local dropped = 0
 local toggled = false
-local needInit = true
+local needSwap = false
+local nextTick = 0
 local x,y
 local myHero, myPlayer
-MPHPAbuse.optionEnable = Menu.AddOptionBool({ "Utility", "MP/HP Abuse" }, "Enable", false)
-MPHPAbuse.optionToggleKey = Menu.AddKeyOption({"Utility", "MP/HP Abuse"}, "Toggle Key", Enum.ButtonCode.KEY_NONE)
-MPHPAbuse.threshold = Menu.AddOptionSlider({"Utility", "MP/HP Abuse"}, "HP Percent Threshold", 0, 100, 5)
-MPHPAbuse.font = Renderer.LoadFont("Tahoma", 18, Enum.FontWeight.BOLD)
+MPHPAbuse.itemsSlots = {}
 function MPHPAbuse.OnGameStart()
-	needInit = true
+	MPHPAbuse.Init()
 end
 function MPHPAbuse.Init()
 	myHero = Heroes.GetLocal()
-	myPlayer = Players.GetLocal()
+	myPlayer
 	x, y = Renderer.GetScreenSize()
 	x = x * 0.59
 	y = y * 0.8426
-	y = y - 20
-	needInit = false	
+	y = y - 20	
 end
 function MPHPAbuse.OnPrepareUnitOrders(orders)
 	if not myHero or not Engine.IsInGame() or not Menu.IsEnabled(MPHPAbuse.optionEnable) or not orders or not Entity.IsAbility(orders.ability) then return end
@@ -120,12 +121,16 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 					if item ~= 0 then
 					local itemName = Ability.GetName(item)
 					if MPHPAbuse.dropItems[itemName] then
+						MPHPAbuse.itemsSlots[itemName] = i			
 						MPHPAbuse.dropItem(myHero, item)
 						dropped = dropped + 1
 					end
 				end
 			end
-			if changed == true then MPHPAbuse.dropItems[name] = true changed = false end
+			if changed == true then 
+				MPHPAbuse.dropItems[name] = true 
+				changed = false 
+			end
 		end
 	end
 end
@@ -138,13 +143,23 @@ function MPHPAbuse.OnUpdate()
 		else
 			toggled = false	
 		end	
-	end	
+	end
+	if needSwap and GameRules.GetGameTime() >= nextTick then
+		for i = 0, 5 do
+			local item = NPC.GetItemByIndex(myHero, i)
+			if item and item ~= 0 then
+				if MPHPAbuse.itemsSlots[Ability.GetName(item)] then
+					if i ~= MPHPAbuse.itemsSlots[Ability.GetName(item)] then
+						MPHPAbuse.moveItem(item, MPHPAbuse.itemsSlots[Ability.GetName(item)])
+					end
+				end
+			end
+		end
+		needSwap = false
+	end
 end
 function MPHPAbuse.OnDraw()
-	if not Menu.IsEnabled(MPHPAbuse.optionEnable) or not Heroes.GetLocal() then return end
-	if needInit then
-		MPHPAbuse.Init()
-	end	
+	if not Menu.IsEnabled(MPHPAbuse.optionEnable) or not myHero then return end
 	if toggled then 
 		Renderer.SetDrawColor(90, 255, 100)
 		Renderer.DrawText(MPHPAbuse.font, x, y, "[MP/HP Abuse: ON]")
@@ -159,7 +174,14 @@ function MPHPAbuse.OnEntityCreate(ent)
 	if Entity.GetClassName(ent) == "C_DOTA_Item_Physical" and dropped > 0 then
 		MPHPAbuse.pickItem(myHero, ent)
 		dropped = dropped - 1
+		if dropped == 0 then
+			needSwap = true
+			nextTick = GameRules.GetGameTime() + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+		end
 	end
+end
+function MPHPAbuse.moveItem(item, newPos)
+	Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_MOVE_ITEM, newPos, Vector(0,0,0), item, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 end
 function MPHPAbuse.dropItem(myHero, item)
 	Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_DROP_ITEM, nil, Entity.GetAbsOrigin(myHero), item, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
@@ -167,4 +189,5 @@ end
 function MPHPAbuse.pickItem(myHero, item)
 	Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_PICKUP_ITEM, item, Vector(0, 0, 0), nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 end
+MPHPAbuse.Init()
 return MPHPAbuse
