@@ -364,39 +364,39 @@ function notification.OnParticleCreate(particle)
 				end
 			end
 		end	
-		if particle.name == "roshan_slam" and time >= roshTick then
-			if Menu.IsEnabled(notification.optionRoshAlertEnable) then
-				if language == 0 then
-					Engine.ExecuteCommand("say_team Кто-то бьет рошана")
-				elseif language == 1 then
-					Engine.ExecuteCommand("say_team Roshan is under attack")		
-				else
-					Engine.ExecuteCommand("say_team Хтось б'є рошана")	
-				end
+	end
+	if particle.name == "roshan_slam" and time >= roshTick then
+		if Menu.IsEnabled(notification.optionRoshAlertEnable) and Menu.IsEnabled(notification.optionChatAlertEnable) then
+			if language == 0 then
+				Engine.ExecuteCommand("say_team Кто-то бьет рошана")
+			elseif language == 1 then
+				Engine.ExecuteCommand("say_team Roshan is under attack")		
+			else
+				Engine.ExecuteCommand("say_team Хтось б'є рошана")	
 			end
-			eventTable["roshAttack"] = time
-			roshTick = time + Menu.GetValue(notification.optionRoshAlertDelay)
 		end
-		if particle.name == "dropped_aegis" then
-			if Menu.IsEnabled(notification.optionRoshAlertEnable) then
-				local gameTime
-				if GameRules.GetGameStartTime() >= 1 then
-					gameTime = time - GameRules.GetGameStartTime()
-				else
-					gameTime = time
-				end
-				local min = math.floor(gameTime / 60)
-				local sec = math.floor(gameTime % 60)
-				if language == 0 then
-					Engine.ExecuteCommand("say_team Рошан умер - "..min..":"..sec)
-				elseif language == 1 then
-					Engine.ExecuteCommand("say_team Roshan died at - "..min..":"..sec)
-				else
-					Engine.ExecuteCommand("say_team Рошан помер - "..min..":"..sec)	
-				end
+		eventTable["roshAttack"] = time
+		roshTick = time + Menu.GetValue(notification.optionRoshAlertDelay)
+	end
+	if particle.name == "dropped_aegis" then
+		if Menu.IsEnabled(notification.optionRoshAlertEnable) and Menu.IsEnabled(notification.optionChatAlertEnable) then
+			local gameTime
+			if GameRules.GetGameStartTime() >= 1 then
+				gameTime = time - GameRules.GetGameStartTime()
+			else
+				gameTime = time
 			end
-			roshAlive = false
+			local min = math.floor(gameTime / 60)
+			local sec = math.floor(gameTime % 60)
+			if language == 0 then
+				Engine.ExecuteCommand("say_team Рошан умер - "..min..":"..sec)
+			elseif language == 1 then
+				Engine.ExecuteCommand("say_team Roshan died at - "..min..":"..sec)
+			else
+				Engine.ExecuteCommand("say_team Рошан помер - "..min..":"..sec)	
+			end
 		end
+		roshAlive = false
 	end
 	if particle.name == "nyx_assassin_vendetta_start" and nyx then
 		if Menu.IsEnabled(notification.optionChatAlertEnable) and Menu.IsEnabled(notification.optionSkillAlertEnable) then
