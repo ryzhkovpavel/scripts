@@ -246,7 +246,7 @@ function notification.OnDraw( ... )
 		Renderer.SetDrawColor(255, 0, 0, 255)
 		drawed = drawed + 1
 		Renderer.DrawText(notification.font, alertX, alertY, "Smoke "..math.floor(eventTable["smoke"] - time))
-		MiniMap.DrawCircle(posTable[eventTable["smoke"]], 255,0, 225) 
+		MiniMap.DrawCircle(posTable[eventTable["smoke"]], 255,0, 225)
 		Renderer.SetDrawColor(255, 255, 255, 255) 
 		Renderer.DrawImage(notification.cachedIcons[1], alertX - 24, alertY + 4, 22, 22)
 	end
@@ -315,7 +315,22 @@ function notification.baraAlert( ... )
 	end
 end
 function notification.OnParticleCreate(particle)
-	if not myHero or not Menu.IsEnabled(notification.optionEnable) then return end
+	if not myHero or not Menu.IsEnabled(notification.optionEnable) then
+		return
+	end
+	if particle.name == "roshan_spawn" then
+		if Menu.IsEnabled(notification.optionRoshAlertEnable) and Menu.IsEnabled(notification.optionChatAlertEnable) then
+			if language == 0 then
+				Engine.ExecuteCommand("say_team Рошан реснулся")
+			elseif language == 1 then
+				Engine.ExecuteCommand("say_team Roshan has respawned")		
+			else
+				Engine.ExecuteCommand("say_team З'явився рошан")	
+			end
+		end
+		roshAlive = true
+		eventTable["roshSpawn"] = time
+	end	
 	if Menu.IsEnabled(notification.optionChatAlertEnable) then
 		if Menu.IsEnabled(notification.optionSkillAlertEnable) then
 			if particle.name == "sandking_epicenter_tell" then
@@ -348,20 +363,7 @@ function notification.OnParticleCreate(particle)
 					end
 				end
 			end
-		end
-		if particle.name == "roshan_spawn" then
-			if Menu.IsEnabled(notification.optionRoshAlertEnable) then
-				if language == 0 then
-					Engine.ExecuteCommand("say_team Рошан реснулся")
-				elseif language == 1 then
-					Engine.ExecuteCommand("say_team Roshan has respawned")		
-				else
-					Engine.ExecuteCommand("say_team З'явився рошан")	
-				end
-			end
-			roshAlive = true
-			eventTable["roshSpawn"] = time
-		end		
+		end	
 		if particle.name == "roshan_slam" and time >= roshTick then
 			if Menu.IsEnabled(notification.optionRoshAlertEnable) then
 				if language == 0 then
