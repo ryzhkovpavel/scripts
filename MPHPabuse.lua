@@ -140,6 +140,9 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 	end
 end
 function MPHPAbuse.AbuseBackPack( ... )
+	if not toggled then
+		return
+	end
 	for i = 0, 5 do
 		local item = NPC.GetItemByIndex(myHero, i)
 		if item ~= 0 and MPHPAbuse.dropItems[Ability.GetName(item)] then
