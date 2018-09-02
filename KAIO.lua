@@ -238,6 +238,8 @@ AllInOne.optionTinkerFailSwitch = Menu.AddOptionBool({"KAIO", "Hero Specific", "
 AllInOne.optionTinkerPoopLaser = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Poop Linken with Laser", false)
 AllInOne.optionTinkerTargetStyle = Menu.AddOptionCombo({"KAIO", "Hero Specific", "Tinker"}, "Target Style", {"Free Target", "Lock Target"}, 1)
 AllInOne.optionTinkerCheckBM = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Check BM/Lotus", true)
+AllInOne.optionTinkerEnableLaser = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker", "Skills"}, "Laser", true)
+Menu.AddOptionIcon(AllInOne.optionTinkerEnableLaser, "panorama/images/spellicons/tinker_laser_png.vtex_c")
 AllInOne.optionTinkerEnableRockets = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker", "Skills"}, "Heat-Seeking Missle", true)
 Menu.AddOptionIcon(AllInOne.optionTinkerEnableRockets, "panorama/images/spellicons/tinker_heat_seeking_missile_png.vtex_c")
 AllInOne.optionTinkerEnableRearm = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker", "Skills"}, "Rearm", true)
@@ -1783,6 +1785,40 @@ function AllInOne.TinkerSpamRockets( ... )
 		end
 	end
 end
+function AllInOne.TinkerNeedRearm( ... )
+	local bool = true
+	if hex and Menu.IsEnabled(AllInOne.optionTinkerEnableHex) and Ability.IsCastable(hex, myMana) then
+		bool = false
+	end
+	if discord and Menu.IsEnabled(AllInOne.optionTinkerEnableDiscord) and Ability.IsCastable(discord, myMana) then
+		bool = false
+	end
+	if eblade and Menu.IsEnabled(AllInOne.optionTinkerEnableEblade) and Ability.IsCastable(eblade, myMana) then
+		bool = false
+	end
+	if bkb and Menu.IsEnabled(GetAvgLatency.optionTinkerEnableBkb) and Ability.IsCastable(bkb, 0) then
+		bool = false
+	end
+	if lotus and Menu.IsEnabled(AllInOne.optionTinkerEnableLotus) and Ability.IsCastable(lotus, myMana) then
+		bool = false
+	end
+	if orchid and Menu.IsEnabled(AllInOne.optionTinkerEnableOrchid) and Ability.IsCastable(orchid, myMana) then
+		bool = false
+	end
+	if bloodthorn and Menu.IsEnabled(AllInOne.optionTinkerEnableBlood) and Ability.IsCastable(bloodthorn, myMana) then
+		bool = false
+	end
+	if shiva and Menu.IsEnabled(AllInOne.optionTinkerEnableShiva) and Ability.IsCastable(shiva, myMana) then
+		bool = false
+	end
+	if w and Menu.IsEnabled(AllInOne.optionTinkerEnableRockets) and Ability.IsCastable(w, myMana) then
+		bool = false
+	end
+	if q and Menu.IsEnabled(AllInOne.optionTinkerEnableLaser) and Ability.IsCastable(q, myMana) then
+		bool = false
+	end
+	return bool
+end
 function AllInOne.TinkerCombo( ... )
 	if not enemy or NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) or NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
 		enemy = nil
@@ -1853,7 +1889,7 @@ function AllInOne.TinkerCombo( ... )
 			Ability.CastNoTarget(w)
 			return
 		end
-		if Ability.IsCastable(q, myMana) then
+		if Ability.IsCastable(q, myMana) and Menu.IsEnabled(AllInOne.optionTinkerEnableLaser) then
 			Ability.CastTarget(q, enemy)
 			return
 		end
@@ -1871,7 +1907,7 @@ function AllInOne.TinkerCombo( ... )
 			end
 		end
 		if Ability.IsCastable(r, myMana) and time >= nextTick and Menu.IsEnabled(AllInOne.optionTinkerEnableRearm) then
-			if not Ability.IsCastable(q,myMana) then
+			if AllInOne.TinkerNeedRearm() then
 				Ability.CastNoTarget(r)
 				nextTick = time + (RearmChannelTime[Ability.GetLevel(r)] + Ability.GetCastPoint(r) + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING))/2
 				return
