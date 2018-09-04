@@ -31,7 +31,7 @@ local necroTable = {}
 local mantaTable = {}
 local canBeShackled = {}
 --items
-local urn, soulring, vessel, hex, halberd, mjolnir, bkb, nullifier, solar, courage, force, pike, eul, orchid, bloodthorn, diffusal, armlet, lotus, satanic, blademail, blink, abyssal, eblade, phase, discord, shiva, refresher, manta, silver, midas, necro, silver, branch, mom
+local urn, soulring, vessel, hex, halberd, mjolnir, bkb, nullifier, solar, courage, force, pike, eul, orchid, bloodthorn, diffusal, armlet, lotus, satanic, blademail, blink, abyssal, eblade, phase, discord, shiva, refresher, manta, silver, midas, necro, silver, branch, mom, arcane
 local time = 0
 local cachedHeroIcons = {}
 local cachedItemIcons = {}
@@ -207,6 +207,18 @@ AllInOne.optionLegionSatanicThreshold = Menu.AddOptionSlider({"KAIO","Hero Speci
 AllInOne.optionLegionEnableSolar = Menu.AddOptionBool({"KAIO","Hero Specific", "Legion Commander", "Items"}, "Solar Crest", false)
 Menu.AddOptionIcon(AllInOne.optionLegionEnableSolar, "panorama/images/items/solar_crest_png.vtex_c")
 AllInOne.optionLegionBlinkRange = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Legion Commander"}, "Minimum Blink Range", 200, 1150, 300)
+AllInOne.optionMagnusEnable = Menu.AddOptionBool({"KAIO", "Hero Specific", "Magnus"}, "Enable", false)
+Menu.AddOptionIcon(AllInOne.optionMagnusEnable, "panorama/images/items/branches_png.vtex_c")
+Menu.AddMenuIcon({"KAIO", "Hero Specific", "Magnus"}, "panorama/images/heroes/icons/npc_dota_hero_magnataur_png.vtex_c")
+AllInOne.optionMagnusComboKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Magnus"}, "Reverse Polarity helper key", Enum.ButtonCode.KEY_Z)
+AllInOne.optionMagnusEnableBlink = Menu.AddOptionBool({"KAIO", "Hero Specific", "Magnus", "Items"}, "Blink Dagger", true)
+Menu.AddOptionIcon(AllInOne.optionMagnusEnableBlink, "panorama/images/items/blink_png.vtex_c")
+AllInOne.optionMagnusEnableBkb = Menu.AddOptionBool({"KAIO", "Hero Specific", "Magnus", "Items"}, "Black King Bar", true)
+Menu.AddOptionIcon(AllInOne.optionMagnusEnableBkb, "panorama/images/items/black_king_bar_png.vtex_c")
+AllInOne.optionMagnusEnableRefresher = Menu.AddOptionBool({"KAIO", "Hero Specific", "Magnus", "Items"}, "Refresher Orb", true)
+Menu.AddOptionIcon(AllInOne.optionMagnusEnableRefresher, "panorama/images/items/refresher_png.vtex_c")
+AllInOne.optionMagnusEnableShiva = Menu.AddOptionBool({"KAIO", "Hero Specific", "Magnus", "Items"}, "Shiva's Guard", true)
+Menu.AddOptionIcon(AllInOne.optionMagnusEnableShiva, "panorama/images/items/shivas_guard_png.vtex_c")
 AllInOne.optionSfEnable = Menu.AddOptionBool({"KAIO","Hero Specific", "Shadow Fiend"}, "Enable", false)
 Menu.AddMenuIcon({"KAIO","Hero Specific", "Shadow Fiend"}, "panorama/images/heroes/icons/npc_dota_hero_nevermore_png.vtex_c")
 Menu.AddOptionIcon(AllInOne.optionSfEnable, "panorama/images/items/branches_png.vtex_c")
@@ -425,7 +437,11 @@ function AllInOne.Init( ... )
 		comboHero = "Windrunner"
 		q = NPC.GetAbilityByIndex(myHero, 0)
 		e = NPC.GetAbilityByIndex(myHero, 2)
-		r = NPC.GetAbility(myHero, "windrunner_focusfire")	
+		r = NPC.GetAbility(myHero, "windrunner_focusfire")
+	elseif NPC.GetUnitName(myHero) == "npc_dota_hero_magnataur" then
+		comboHero = "Magnus"
+		e = NPC.GetAbility(myHero, "magnataur_skewer")
+		r = NPC.GetAbility(myHero, "magnataur_reverse_polarity")	
 	else	
 		myHero = nil
 		return	
@@ -478,6 +494,7 @@ function AllInOne.ClearVar( ... )
 	manta = nil
 	silver = nil
 	branch = nil
+	arcane = nil
 	mom = nil
 end
 function AllInOne.cloneClearVar( ... )
@@ -663,11 +680,7 @@ function AllInOne.OnUpdate( ... )
 		end
 	elseif comboHero == "Enigma" and Menu.IsEnabled(AllInOne.optionEnigmaEnable) then
 		if Menu.IsKeyDown(AllInOne.optionEnigmaComboKey) then
-			if not enemy then
-				enemy = Input.GetNearestHeroToCursor(myTeam, Enum.TeamType.TEAM_ENEMY)
-			end
-			if enemy and Entity.IsAlive(enemy) then
-				enemyPosition = Entity.GetAbsOrigin(enemy)
+			if Entity.IsAlive(myHero) then
 				AllInOne.EnigmaCombo()
 			end
 		end
@@ -710,6 +723,12 @@ function AllInOne.OnUpdate( ... )
 		end
 		if Ability.IsCastable(q, myMana) and Entity.GetHeroesInRadius(myHero, Ability.GetCastRange(q), Enum.TeamType.TEAM_ENEMY) and Menu.IsEnabled(AllInOne.optionWindrunnerDrawShackle) then
 			AllInOne.WindrunnerDrawInfo(Entity.GetHeroesInRadius(myHero, Ability.GetCastRange(q), Enum.TeamType.TEAM_ENEMY))
+		end
+	elseif comboHero == "Magnus" and Menu.IsEnabled(AllInOne.optionMagnusEnable) then
+		if Menu.IsKeyDown(AllInOne.optionMagnusComboKey) then
+			if Entity.IsAlive(myHero) then
+				AllInOne.MagnusCombo()
+			end
 		end
 	end
 	AllInOne.ClearVar()
@@ -783,6 +802,8 @@ function AllInOne.OnUpdate( ... )
 				branch = item
 			elseif name == "item_mask_of_madness" then
 				mom = item
+			elseif name == "item_arcane_boots" then
+				arcane = item	
 			end
 		end
 	end
@@ -2257,9 +2278,6 @@ function AllInOne.EmberCombo( ... )
 	Player.AttackTarget(myPlayer, myHero, enemy)
 end
 function AllInOne.EnigmaCombo( ... )
-	if not enemy then
-		return 
-	end
 	local orderPos
 	if Menu.GetValue(AllInOne.optionEnigmaComboPos) == 0 then
 		local tempTable = Entity.GetHeroesInRadius(myHero, 1600, Enum.TeamType.TEAM_ENEMY)
@@ -3105,6 +3123,75 @@ function AllInOne.canEnemyBeShackledWithTree(npc)
 		end
 	end
 	return false
+end
+function AllInOne.MagnusCombo( ... )
+	local tempTable = Entity.GetHeroesInRadius(myHero, 1600, Enum.TeamType.TEAM_ENEMY)
+	if tempTable then
+		local orderPos = AllInOne.FindBestOrderPosition(tempTable, 635)
+		if tostring(orderPos) == tostring(Vector(0,0,0)) then
+			return
+		end
+		if refresher and Menu.IsEnabled(AllInOne.optionMagnusEnableRefresher) and Ability.IsCastable(refresher, myMana) and not Ability.IsReady(r) and Ability.GetCooldownTimeLeft(r) > 25 then
+			Ability.CastNoTarget(refresher)
+			return
+		end
+		if myMana/NPC.GetMaxMana(myHero) <= 0.9 and arcane and Ability.IsCastable(arcane, myMana) then
+			Ability.CastNoTarget(arcane)
+			return
+		end
+		if Ability.IsCastable(r, myMana) then
+			if bkb and Ability.IsCastable(bkb, 0) and Menu.IsEnabled(AllInOne.optionMagnusEnableBkb) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+				Ability.CastNoTarget(bkb)
+				return
+			end
+			if shiva and Ability.IsCastable(shiva, myMana) and Menu.IsEnabled(AllInOne.optionMagnusEnableShiva) then
+				Ability.CastNoTarget(shiva)
+				return
+			end
+			if blink and Ability.IsCastable(blink, 0) and Menu.IsEnabled(AllInOne.optionMagnusEnableBlink) then
+				if NPC.IsPositionInRange(myHero, orderPos, 1200) and not NPC.IsPositionInRange(myHero, orderPos, 150) then
+					Ability.CastPosition(blink, orderPos)
+					return
+				end
+			end
+			if Ability.IsCastable(e, myMana) and Ability.IsCastable(r, myMana - Ability.GetManaCost(e)) and NPC.IsPositionInRange(myHero, orderPos, 1200) and not NPC.IsPositionInRange(myHero, orderPos, 150) then
+				Ability.CastPosition(e, orderPos)
+				return
+			end
+			if not NPC.IsPositionInRange(myHero, orderPos, 100) then
+				Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_MOVE_TO_POSITION, nil, orderPos, nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
+			elseif not NPC.IsAttacking(myHero) then
+				Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_ATTACK_MOVE, nil, orderPos, nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)	
+			end
+			local bool = false
+			local tempTable2 = Entity.GetHeroesInRadius(myHero, 600, Enum.TeamType.TEAM_ENEMY)
+			if tempTable2 then
+				for i, k in pairs(tempTable2) do
+					if k and Entity.IsEntity(k) and Entity.IsAlive(k) then
+						if not NPC.HasState(k, Enum.ModifierState.MODIFIER_STATE_STUNNED) and not NPC.HasState(k, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+							bool = true
+						end
+						if NPC.HasModifier(k, "modifier_stunned") and Modifier.GetDieTime(NPC.GetModifier(k, "modifier_stunned")) - time <= Ability.GetCastPoint(r) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2 + 0.1 then
+							bool = true
+						end
+						if NPC.HasModifier(k, "modifier_lion_voodoo") and Modifier.GetDieTime(NPC.GetModifier(k, "modifier_lion_voodoo")) - time <= Ability.GetCastPoint(r) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2 + 0.1 then
+							bool = true
+						end
+						if NPC.HasModifier(k, "modifier_shadow_shaman_voodoo") and Modifier.GetDieTime(NPC.GetModifier(k, "modifier_shadow_shaman_voodoo")) - time <= Ability.GetCastPoint(r) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2 + 0.1 then
+							bool = true
+						end
+						if NPC.HasModifier(k, "modifier_sheepstick_debuff") and Modifier.GetDieTime(NPC.GetModifier(k, "modifier_sheepstick_debuff")) - time <= Ability.GetCastPoint(r) + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING) * 2 + 0.1 then
+							bool = true
+						end
+					end
+				end
+				if time >= nextTick and bool and NPC.IsPositionInRange(myHero, orderPos, 150) then
+					Ability.CastNoTarget(r)
+					nextTick = time + Ability.GetCastPoint(r) + 0.2 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
+				end
+			end
+		end
+	end
 end
 function AllInOne.IsLinkensProtected()
 	if NPC.IsLinkensProtected(enemy) then
