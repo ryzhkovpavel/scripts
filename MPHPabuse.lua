@@ -10,7 +10,7 @@ MPHPAbuse.items = {
 	item_magic_wand = true,
 	item_magic_stick = true,
 	item_guardian_greaves = true,
-	item_mango = true,
+	item_enchanted_mango = true,
 	item_cheese = true,
 	item_mekansm = true,
 	item_faerie_fire = true
@@ -21,6 +21,7 @@ MPHPAbuse.dropItems = {
 	item_ogre_axe = true,
 	item_mantle = true,
 	item_mystic_staff = true,
+	item_soul_ring = true,
 	item_point_booster = true,
 	item_robe = true,
 	item_staff_of_wizardry = true,
@@ -126,7 +127,7 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 				if item ~= 0 then
 					local itemName = Ability.GetName(item)
 					if MPHPAbuse.dropItems[itemName] then
-						MPHPAbuse.itemsSlots[itemName] = i			
+						MPHPAbuse.itemsSlots[itemName] = i		
 						MPHPAbuse.dropItem(myHero, item)
 						dropped = dropped + 1
 					end
