@@ -56,7 +56,7 @@ function autoDeward.OnUpdate( ... )
 		end
 	end
 	if not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_INVISIBLE) or NPC.GetUnitName(myHero) == "npc_dota_hero_riki" then
-		if nearWard and Entity.IsAlive(nearWard) then
+		if nearWard and Entity.IsAlive(nearWard) and not NPC.IsChannellingAbility(myHero) and not NPC.HasModifier(myHero, "modifier_teleporting") then
 			if qBlade and Ability.IsCastable(qBlade, 0) then
 				Ability.CastTarget(qBlade, nearWard)
 				return
