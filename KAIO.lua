@@ -247,6 +247,7 @@ Menu.AddOptionIcon(AllInOne.optionTinkerEnable, "panorama/images/items/branches_
 AllInOne.optionTinkerComboKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Tinker"}, "Combo Key", Enum.ButtonCode.KEY_Z)
 AllInOne.optionTinkerSpamKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Tinker"}, "Spam Rockets Key", Enum.ButtonCode.KEY_F)
 AllInOne.optionTinkerFailSwitch = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Rocket and Rearm failswitch", true)
+AllInOne.optionTinkerSoulRearm = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Auto use soulring before rearm", true)
 AllInOne.optionTinkerPoopLaser = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Poop Linken with Laser", false)
 AllInOne.optionTinkerTargetStyle = Menu.AddOptionCombo({"KAIO", "Hero Specific", "Tinker"}, "Target Style", {"Free Target", "Lock Target"}, 1)
 AllInOne.optionTinkerCheckBM = Menu.AddOptionBool({"KAIO", "Hero Specific", "Tinker"}, "Check BM/Lotus", true)
@@ -3242,13 +3243,13 @@ function AllInOne.PoopLinken(exception)
 	end
 end
 function AllInOne.OnPrepareUnitOrders(order)
-	if not myHero or not Menu.IsEnabled(AllInOne.optionTinkerFailSwitch) or comboHero ~= "Tinker" then
+	if not myHero or comboHero ~= "Tinker" then
 		return
 	end
 	if not order or not order.ability or order.order ~= 8 then
 		return
 	end
-	if Ability.GetName(order.ability) == "tinker_heat_seeking_missile" then
+	if Ability.GetName(order.ability) == "tinker_heat_seeking_missile" and Menu.IsEnabled(AllInOne.optionTinkerFailSwitch) then
 		if not Entity.GetHeroesInRadius(myHero, Ability.GetCastRange(w), Enum.TeamType.TEAM_ENEMY) then
 			return false
 		end
@@ -3271,7 +3272,12 @@ function AllInOne.OnPrepareUnitOrders(order)
 				end
 			end
 		end
-		return bool
+		if Menu.IsEnabled(AllInOne.optionTinkerFailSwitch) and not bool then
+			return false
+		end
+		if soulring and Ability.IsCastable(soulring, 0) and Menu.IsEnabled(AllInOne.optionTinkerSoulRearm) then
+			Ability.CastNoTarget(soulring)
+		end
 	end
 end
 AllInOne.Init()
