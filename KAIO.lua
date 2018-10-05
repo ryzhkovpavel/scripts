@@ -3290,7 +3290,7 @@ function AllInOne.AbilityIsCastable(ability, myMana)
 end
 function AllInOne.ItemIsCastable(ability, myMana)
 	if not Entity.IsAlive(myHero) then return false end
-	if myMan >= Ability.GetManaCost(ability) and Ability.IsReady(ability) then
+	if myMana >= Ability.GetManaCost(ability) and Ability.IsReady(ability) then
 		if not NPC.IsStunned(myHero) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_HEXED) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasModifier(myHero, "modifier_doom_bringer_doom") and not NPC.HasModifier(myHero, "modifier_item_nullifier_mute") then
 			return true
 		end
