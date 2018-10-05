@@ -2674,23 +2674,22 @@ function AllInOne.ClinkzCombo( ... )
 		attackRange = NPC.GetAttackRange(myHero)
 	end
 	if NPC.IsEntityInRange(myHero, enemy, attackRange) then
-		if q and Ability.IsCastable(q, myMana) then
+		if q and AllInOne.AbilityIsCastable(q, myMana) then
 			Ability.CastNoTarget(q)
 			return
 		end
-		if not Ability.GetAutoCastState(w) and time >= nextTick then
+		if not Ability.GetAutoCastState(w) and AllInOne.AbilityIsCastable(w, myMana) and time >= nextTick then
 			Ability.ToggleMod(w)
 			nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
-			return
 		end
 		if AllInOne.IsLinkensProtected() and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			AllInOne.PoopLinken()
 		end
-		if hex and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and Menu.IsEnabled(AllInOne.optionClinkzEnableHex) and Ability.IsCastable(hex, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if hex and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and Menu.IsEnabled(AllInOne.optionClinkzEnableHex) and AllInOne.ItemIsCastable(hex, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			Ability.CastTarget(hex, enemy)
 			return
 		end		
-		if nullifier and not NPC.HasModifier(enemy, "modifier_item_nullifier_mute") and Menu.IsEnabled(AllInOne.optionClinkzEnableNullifier) and Ability.IsCastable(nullifier, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if nullifier and not NPC.HasModifier(enemy, "modifier_item_nullifier_mute") and Menu.IsEnabled(AllInOne.optionClinkzEnableNullifier) and AllInOne.ItemIsCastable(nullifier, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			if NPC.GetItem(enemy, "item_aeon_disk", true) then
 				if NPC.HasModifier(enemy, "modifier_item_aeon_disk_buff") and not Ability.IsReady(NPC.GetItem(enemy, "item_aeon_disk", true)) then
 					Ability.CastTarget(nullifier,enemy)
@@ -2716,11 +2715,11 @@ function AllInOne.ClinkzCombo( ... )
 			end
 			return
 		end		
-		if diffusal and not NPC.HasModifier(enemy, "modifier_item_diffusal_blade_slow") and Menu.IsEnabled(AllInOne.optionClinkzEnableDiffusal) and Ability.IsCastable(diffusal,0) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if diffusal and not NPC.HasModifier(enemy, "modifier_item_diffusal_blade_slow") and Menu.IsEnabled(AllInOne.optionClinkzEnableDiffusal) and AllInOne.ItemIsCastable(diffusal,0) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			Ability.CastTarget(diffusal, enemy)
 			return
 		end
-		if orchid and not NPC.HasModifier(enemy, "modifier_orchid_malevolence_debuff") and Menu.IsEnabled(AllInOne.optionClinkzEnableOrchid) and Ability.IsCastable(orchid, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if orchid and not NPC.HasModifier(enemy, "modifier_orchid_malevolence_debuff") and Menu.IsEnabled(AllInOne.optionClinkzEnableOrchid) and AllInOne.ItemIsCastable(orchid, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			if Menu.IsEnabled(AllInOne.optionClinkzEnableStack) and NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED)then
 				Ability.CastTarget(orchid, enemy)
 			elseif not Menu.IsEnabled(AllInOne.optionClinkzEnableStack) and NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
@@ -2730,7 +2729,7 @@ function AllInOne.ClinkzCombo( ... )
 			end
 			return
 		end
-		if bloodthorn and not NPC.HasModifier(enemy, "modifier_bloodthorn_debuff") and Menu.IsEnabled(AllInOne.optionClinkzEnableBlood) and Ability.IsCastable(bloodthorn, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if bloodthorn and not NPC.HasModifier(enemy, "modifier_bloodthorn_debuff") and Menu.IsEnabled(AllInOne.optionClinkzEnableBlood) and AllInOne.ItemIsCastable(bloodthorn, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			if Menu.IsEnabled(AllInOne.optionClinkzEnableStack) and NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
 				Ability.CastTarget(bloodthorn, enemy)
 			elseif not Menu.IsEnabled(AllInOne.optionClinkzEnableStack) and NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
@@ -2740,15 +2739,15 @@ function AllInOne.ClinkzCombo( ... )
 			end
 			return
 		end
-		if courage and not NPC.HasModifier(enemy, "modifier_item_medallion_of_courage_armor_reduction") and Menu.IsEnabled(AllInOne.optionClinkzEnableCourage) and Ability.IsCastable(courage, 0) then
+		if courage and not NPC.HasModifier(enemy, "modifier_item_medallion_of_courage_armor_reduction") and Menu.IsEnabled(AllInOne.optionClinkzEnableCourage) and AllInOne.ItemIsCastable(courage, 0) then
 			Ability.CastTarget(courage, enemy)
 			return
 		end
-		if solar and not NPC.HasModifier(enemy, "modifier_item_solar_crest_armor_reduction") and Menu.IsEnabled(AllInOne.optionClinkzEnableSolar) and Ability.IsCastable(solar, 0) then
+		if solar and not NPC.HasModifier(enemy, "modifier_item_solar_crest_armor_reduction") and Menu.IsEnabled(AllInOne.optionClinkzEnableSolar) and AllInOne.ItemIsCastable(solar, 0) then
 			Ability.CastTarget(solar, enemy)
 			return
 		end
-		if bkb and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and Menu.IsEnabled(AllInOne.optionClinkzEnableBkb) and Ability.IsCastable(bkb, 0) then
+		if bkb and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and Menu.IsEnabled(AllInOne.optionClinkzEnableBkb) and AllInOne.ItemIsCastable(bkb, 0) then
 			Ability.CastNoTarget(bkb)
 			return
 		end
@@ -3279,6 +3278,24 @@ function AllInOne.OnPrepareUnitOrders(order)
 			Ability.CastNoTarget(soulring)
 		end
 	end
+end
+function AllInOne.AbilityIsCastable(ability, myMana)
+	if not Entity.IsAlive(myHero) then return false end
+	if myMana >= Ability.GetManaCost(ability) and Ability.IsReady(ability) then
+		if not NPC.IsSilenced(myHero) and not NPC.IsStunned(myHero) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_HEXED) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
+			return true
+		end
+	end
+	return false
+end
+function AllInOne.ItemIsCastable(ability, myMana)
+	if not Entity.IsAlive(myHero) then return false end
+	if myMan >= Ability.GetManaCost(ability) and Ability.IsReady(ability) then
+		if not NPC.IsStunned(myHero) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_HEXED) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasModifier(myHero, "modifier_doom_bringer_doom") and not NPC.HasModifier(myHero, "modifier_item_nullifier_mute") then
+			return true
+		end
+	end
+	return false
 end
 AllInOne.Init()
 return AllInOne
