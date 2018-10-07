@@ -12,6 +12,8 @@ local needTime = 0
 local needTime2 = 0
 local needAttack
 local added = false
+local spark_spam = nil
+local spam_particle = nil
 local pushing = false
 local ebladeCasted = {}
 local RearmChannelTime = {}
@@ -53,6 +55,10 @@ AllInOne.optionArcEnableField = Menu.AddOptionBool({"KAIO", "Hero Specific", "Ar
 Menu.AddOptionIcon(AllInOne.optionArcEnableField, "panorama/images/spellicons/arc_warden_magnetic_field_png.vtex_c")
 AllInOne.optionArcEnableSpark = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Skills"}, "Spark Wraith", true)
 Menu.AddOptionIcon(AllInOne.optionArcEnableSpark, "panorama/images/spellicons/arc_warden_spark_wraith_png.vtex_c", true)
+AllInOne.optionArcSpamSparkKey = Menu.AddKeyOption({"KAIO", "Hero Specific", "Arc Warden"}, "Spam Spark Wraith Key", Enum.ButtonCode.KEY_T)
+AllInOne.optionDoubleFieldMode = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Double Magnetic Field Mode"}, "Enable", false)
+AllInOne.optionSharedPointRadius = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Arc Warden", "Double Magnetic Field Mode"}, "Shared Point Radius", 0, 100, 10)
+AllInOne.optionDoubleFieldModeMinimumHeroes = Menu.AddOptionSlider({"KAIO", "Hero Specific", "Arc Warden", "Double Magnetic Field Mode"}, "Minimum Heroes to use double field", 1, 5, 2)
 AllInOne.optionArcEnableBkb = Menu.AddOptionBool({"KAIO", "Hero Specific", "Arc Warden", "Items"}, "Black King Bar", false)
 Menu.AddOptionIcon(AllInOne.optionArcEnableBkb, "panorama/images/items/black_king_bar_png.vtex_c")
 AllInOne.optionArcEnableBlood = Menu.AddOptionBool({"KAIO", "Hero Specific","Arc Warden", "Items"}, "Bloodthorn", false)
@@ -380,6 +386,7 @@ function AllInOne.Init( ... )
 	needTime2 = 0
 	time = 0
 	added = false
+	spark_spam = nil
 	if not myHero then return end
 	if NPC.GetUnitName(myHero) == "npc_dota_hero_clinkz" then
 		comboHero = "Clinkz"
@@ -604,8 +611,27 @@ function AllInOne.OnUpdate( ... )
 		if Menu.IsKeyDownOnce(AllInOne.optionArcClonePushKey) and ((clone and Entity.IsEntity(clone) and Entity.IsAlive(clone)) or Ability.IsCastable(r, myMana))  then
 			pushing = true
 		end
+		if Menu.IsKeyDownOnce(AllInOne.optionArcSpamSparkKey) then
+			if not spark_spam then
+				spark_spam = Input.GetWorldCursorPos()
+			else
+				spark_spam = nil
+			end	
+		end
 		if clone_target and not Menu.IsKeyDown(AllInOne.optionArcMainComboKey) and not Menu.IsKeyDown(AllInOne.optionArcCloneComboKey) and not pushing then
 			clone_target = nil
+		end
+		if spark_spam then
+			if Entity.IsAlive(myHero) then
+				if NPC.IsPositionInRange(myHero, spark_spam, Ability.GetCastRange(e)) and Ability.IsCastable(e, myMana) then
+					Ability.CastPosition(e, spark_spam)
+				end
+			end
+			if clone and Entity.IsEntity(clone) and Entity.IsAlive(clone) then
+				if NPC.IsPositionInRange(clone, spark_spam, Ability.GetCastRange(clone_e)) and Ability.IsCastable(clone_e, clone_mana) then
+					Ability.CastPosition(clone_e, spark_spam)
+				end
+			end
 		end
 	elseif comboHero == "Legion" and Menu.IsEnabled(AllInOne.optionLegionEnable) then
 		if Menu.IsKeyDown(AllInOne.optionLegionComboKey) then
@@ -1132,7 +1158,7 @@ function AllInOne.ArcPush( ... )
 		end
 	end
 	if clone and Entity.IsEntity(clone) and Entity.IsAlive(clone) and clone_target and Entity.IsEntity(clone_target) and Entity.IsAlive(clone_target) and NPC.IsEntityInRange(clone, clone_target, 1100) then
-		AllInOne.ArcCloneCombo(clone_target)
+		AllInOne.ArcCloneCombo(clone_target, true)
 	end
 	if clone and Entity.IsEntity(clone) and Entity.IsAlive(clone) and clone_boots and Ability.IsCastable(clone_boots, clone_mana) then
 		if AllInOne.ArcTP() and not NPC.IsPositionInRange(clone, AllInOne.ArcTP(), Menu.GetValue(AllInOne.optionArcMinimumRangeToTP)) then
@@ -1398,6 +1424,9 @@ function AllInOne.ArcCloneCombo(target, bool)
 	if not clone or not Entity.IsEntity(clone) or not Entity.IsAlive(clone) then
 		return
 	end
+	if not bool then
+		pushing = false
+	end
 	if not NPC.IsEntityInRange(clone, target, 2300) then
 		clone_target = nil
 		pushing = true
@@ -1406,7 +1435,7 @@ function AllInOne.ArcCloneCombo(target, bool)
 	if clone and Entity.IsEntity(clone) and Entity.IsAlive(clone) then
 		clone_state = 1
 		clone_target = target
-		if NPC.IsLinkensProtected(target) then
+		if AllInOne.IsLinkensProtected(target) then
 			if clone_diffusal and Menu.IsEnabled(AllInOne.optionEnablePoopDiffusal) and Ability.IsCastable(clone_diffusal, 0) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
 				Ability.CastTarget(clone_diffusal, target)
 				return
@@ -1617,7 +1646,7 @@ function AllInOne.ArcCombo( ... )
 		enemy = nil
 		return
 	end
-	if NPC.IsLinkensProtected(enemy) then
+	if AllInOne.IsLinkensProtected(enemy) then
 		AllInOne.PoopLinken()
 	end
 	if NPC.HasModifier(myHero, "modifier_item_silver_edge_windwalk") and time >= needTime then
@@ -1635,11 +1664,25 @@ function AllInOne.ArcCombo( ... )
 			needTime = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 			return
 		end	
-	end	
+	end
 	if Menu.IsEnabled(AllInOne.optionArcStackClone) and time >= needTime and Ability.IsCastable(r, myMana) then
 		Ability.CastNoTarget(r)
 		needTime = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 		return
+	end
+	local tempTable = Entity.GetHeroesInRadius(myHero, 1000, Enum.TeamType.TEAM_ENEMY)
+	if Menu.IsEnabled(AllInOne.optionDoubleFieldMode) and tempTable and Ability.IsCastable(w, myMana) and time >= needTime and Menu.IsEnabled(AllInOne.optionArcEnableField) and clone and Entity.IsAlive(clone) and Ability.IsCastable(clone_w, clone_mana) and NPC.IsEntityInRange(myHero, clone, Ability.GetCastRange(w)) then
+		local count = 0
+		for i, k in pairs(tempTable) do
+			count = count + 1
+		end
+		if count >= Menu.GetValue(AllInOne.optionDoubleFieldModeMinimumHeroes) then
+			local firstFieldOrderPos = myPos+Vector(-1, 0.5, 0):Normalized():Scaled(300-Menu.GetValue(AllInOne.optionSharedPointRadius))
+			local secondFieldOrderPos = myPos+Vector(1, 0.15, 0):Normalized():Scaled(300-Menu.GetValue(AllInOne.optionSharedPointRadius))
+			Ability.CastPosition(w, firstFieldOrderPos)
+			Ability.CastPosition(clone_w, secondFieldOrderPos)
+			return
+		end
 	end
 	if silver and Menu.IsEnabled(AllInOne.optionArcEnableSilver) and Ability.IsCastable(silver, myMana) then
 		Ability.CastNoTarget(silver)
@@ -1865,7 +1908,7 @@ function AllInOne.TinkerCombo( ... )
 			end
 			return
 		end
-		if NPC.IsLinkensProtected(enemy) then
+		if AllInOne.IsLinkensProtected(enemy) then
 			if Menu.IsEnabled(AllInOne.optionTinkerPoopLaser) and Ability.IsCastable(q, myMana) then
 				Ability.CastTarget(q,enemy)
 				return
@@ -1949,7 +1992,7 @@ function AllInOne.LionCombo( ... )
 		Ability.CastPosition(blink, enemyPosition + (myPos - enemyPosition):Normalized():Scaled(Menu.GetValue(AllInOne.optionLionComboRadius)))
 		return
 	end
-	if NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
+	if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
 		if Menu.IsEnabled(AllInOne.optionLionPoopLinkenManaDrain) and Ability.IsCastable(e, myMana) then
 			Ability.CastTarget(e, enemy)
 		else
@@ -2112,7 +2155,7 @@ function AllInOne.SfCombo( ... )
 		return
 	end
 	if r and Ability.IsCastable(r, myMana) then
-		if AllInOne.IsLinkensProtected() and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			AllInOne.PoopLinken(eul)
 		end
 		local possibleRange = NPC.GetMoveSpeed(myHero) * 0.8
@@ -2152,7 +2195,7 @@ function AllInOne.SfCombo( ... )
 		if phase and Menu.IsEnabled(AllInOne.optionSfEnablePhase) and Ability.IsCastable(phase, 0) then
 			Ability.CastNoTarget(phase)
 		end
-		if eul and Ability.IsCastable(eul, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not AllInOne.IsLinkensProtected() then
+		if eul and Ability.IsCastable(eul, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not AllInOne.IsLinkensProtected(enemy) then
 			if Menu.IsEnabled(AllInOne.optionSfEnableEthereal) and ebladeCasted[enemy] and eblade and Ability.SecondsSinceLastUse(eblade) < 3 then
 				if NPC.HasModifier(enemy, "modifier_item_ethereal_blade_ethereal") then
 					Ability.CastTarget(eul, enemy)
@@ -2240,7 +2283,7 @@ function AllInOne.EmberCombo( ... )
 		nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 		return
 	end
-	if AllInOne.IsLinkensProtected() and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+	if AllInOne.IsLinkensProtected(enemy) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 		AllInOne.PoopLinken()
 	end
 	if f and Ability.IsCastable(f,myMana) and remnant_casted and time >= needTime then
@@ -2396,6 +2439,16 @@ function AllInOne.OnDraw( ... )
 			end
 		end
 	end
+	if comboHero == "Arc" and spark_spam and not spam_particle then
+		spam_particle = Particle.Create("particles\\ui_mouseactions\\drag_selected_ring.vpcf")
+		Particle.SetControlPoint(spam_particle, 3, Vector(9,0,0))
+		Particle.SetControlPoint(spam_particle, 2, Vector(375, 255, 0))
+		Particle.SetControlPoint(spam_particle, 0, spark_spam)
+		Particle.SetControlPoint(spam_particle, 1, Vector(0, 255, 0))
+	elseif spam_particle and not spark_spam then
+		Particle.Destroy(spam_particle)
+		spam_particle = nil
+	end
 end
 function AllInOne.GetMoveSpeed(ent)
 	local baseSpeed = NPC.GetBaseSpeed(ent)
@@ -2468,7 +2521,7 @@ function AllInOne.LegionCombo( ... )
 		end
 	end
 	if NPC.IsEntityInRange(myHero, enemy, NPC.GetAttackRange(myHero)*1.5) then
-		if AllInOne.IsLinkensProtected() and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)then
+		if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)then
 			AllInOne.PoopLinken()
 		end
 		if w and Menu.IsEnabled(AllInOne.optionLegionEnablePressTheAttack) and Ability.IsCastable(w, myMana) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)  then
@@ -2529,7 +2582,7 @@ function AllInOne.LegionCombo( ... )
 			Ability.CastNoTarget(satanic)
 			return
 		end
-		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not NPC.IsLinkensProtected(enemy) then
+		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not AllInOne.IsLinkensProtected(enemy) then
 			if not NPC.IsEntityInRange(myHero, enemy, 150) then
 				Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_MOVE_TO_POSITION, nil, enemyPosition, nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 			else	
@@ -2538,10 +2591,10 @@ function AllInOne.LegionCombo( ... )
 			end
 		end
 	else
-		if AllInOne.IsLinkensProtected() and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			AllInOne.PoopLinken()
 		end
-		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not NPC.IsLinkensProtected(enemy) then
+		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not AllInOne.IsLinkensProtected(enemy) then
 			Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_MOVE_TO_POSITION, nil, enemyPosition, nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 		else
 			Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_ATTACK_TARGET, enemy, Vector(0,0,0), nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
@@ -2682,7 +2735,7 @@ function AllInOne.ClinkzCombo( ... )
 			Ability.ToggleMod(w)
 			nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 		end
-		if AllInOne.IsLinkensProtected() and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
 			AllInOne.PoopLinken()
 		end
 		if hex and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and Menu.IsEnabled(AllInOne.optionClinkzEnableHex) and AllInOne.ItemIsCastable(hex, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
@@ -2762,7 +2815,7 @@ function AllInOne.WindrunnerCombo( ... )
 	if Menu.IsEnabled(AllInOne.optionWindrunnerCheckBM) and (NPC.HasModifier(enemy, "modifier_item_blade_mail_reflect") or NPC.HasModifier(enemy, "modifier_item_lotus_orb_active")) then
 		return
 	end
-	if NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
+	if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) then
 		AllInOne.PoopLinken()
 	end
 	if Ability.IsCastable(q, myMana) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableShackle) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
@@ -2918,7 +2971,7 @@ function AllInOne.WindrunnerCombo( ... )
 			return
 		end
 	end
-	if Ability.IsCastable(r, myMana) and not NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableFocusFire) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_ATTACK_IMMUNE) then
+	if Ability.IsCastable(r, myMana) and not AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionWindrunnerEnableFocusFire) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_ATTACK_IMMUNE) then
 		Ability.CastTarget(r, enemy)
 		nextTick = time + 0.05
 		return
@@ -3193,9 +3246,14 @@ function AllInOne.MagnusCombo( ... )
 		end
 	end
 end
-function AllInOne.IsLinkensProtected()
-	if NPC.IsLinkensProtected(enemy) then
+function AllInOne.IsLinkensProtected(npc)
+	if NPC.IsLinkensProtected(npc) then
 		return true
+	end
+	if NPC.GetUnitName(npc) == "npc_dota_hero_antimage" then
+		if (NPC.HasItem(npc, "item_ultimate_scepter") or NPC.HasModifier(npc, "modifier_item_ultimate_scepter_consumed")) and Ability.IsReady(NPC.GetAbility(npc, "antimage_spell_shield")) and not NPC.HasModifierState(npc, Enum.ModifierState.MODIFIER_STATE_PASSIVES_DISABLED) then
+			return true
+		end
 	end
 	return false
 end
