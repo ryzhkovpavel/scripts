@@ -125,9 +125,8 @@ function MPHPAbuse.OnPrepareUnitOrders(orders)
 			for i = 0, 5 do
 				local item = NPC.GetItemByIndex(myHero, i)
 				if item ~= 0 then
-					local itemName = Ability.GetName(item)
-					if MPHPAbuse.dropItems[itemName] then
-						MPHPAbuse.itemsSlots[itemName] = i		
+					if MPHPAbuse.dropItems[Ability.GetName(item)] then
+						MPHPAbuse.itemsSlots[item] = i		
 						MPHPAbuse.dropItem(myHero, item)
 						dropped = dropped + 1
 					end
@@ -147,7 +146,7 @@ function MPHPAbuse.AbuseBackPack( ... )
 	for i = 0, 5 do
 		local item = NPC.GetItemByIndex(myHero, i)
 		if item ~= 0 and MPHPAbuse.dropItems[Ability.GetName(item)] then
-			MPHPAbuse.itemsSlots[Ability.GetName(item)] = i
+			MPHPAbuse.itemsSlots[item] = i
 			MPHPAbuse.moveItem(item, 6)
 		end
 		if i == 5 then
@@ -168,6 +167,7 @@ function MPHPAbuse.OnUpdate()
 		end	
 	end
 	if Menu.IsKeyDownOnce(MPHPAbuse.optionBackPackAbuseKey) and time >= nextTick2 then
+
 		MPHPAbuse.AbuseBackPack()
 		nextTick2 = time + 1
 	end
@@ -175,9 +175,9 @@ function MPHPAbuse.OnUpdate()
 		for i = 0, 8 do
 			local item = NPC.GetItemByIndex(myHero, i)
 			if item and item ~= 0 then
-				if MPHPAbuse.itemsSlots[Ability.GetName(item)] then
-					if i ~= MPHPAbuse.itemsSlots[Ability.GetName(item)] then
-						MPHPAbuse.moveItem(item, MPHPAbuse.itemsSlots[Ability.GetName(item)])
+				if MPHPAbuse.itemsSlots[item] then
+					if i ~= MPHPAbuse.itemsSlots[item] then
+						MPHPAbuse.moveItem(item, MPHPAbuse.itemsSlots[item])
 					end
 				end
 			end
