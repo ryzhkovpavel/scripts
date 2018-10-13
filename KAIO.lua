@@ -3307,7 +3307,7 @@ function AllInOne.OnPrepareUnitOrders(order)
 		return
 	end
 	if Ability.GetName(order.ability) == "tinker_heat_seeking_missile" and Menu.IsEnabled(AllInOne.optionTinkerFailSwitch) then
-		if not Entity.GetHeroesInRadius(myHero, 2500-24, Enum.TeamType.TEAM_ENEMY) then
+		if not Entity.GetHeroesInRadius(myHero, 2500, Enum.TeamType.TEAM_ENEMY) then
 			return false
 		end
 	end
