@@ -1730,7 +1730,7 @@ function AllInOne.ArcCombo( ... )
 		end
 	end
 	if orchid and time >= needTime and Menu.IsEnabled(AllInOne.optionArcEnableOrchid) and Ability.IsCastable(orchid, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
-		if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.IsSilenced(enemy) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+		if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.IsSilenced(enemy) then
 			Ability.CastTarget(orchid,enemy)
 			needTime = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 			return
@@ -1741,7 +1741,7 @@ function AllInOne.ArcCombo( ... )
 		end
 	end
 	if bloodthorn and time >= needTime and Menu.IsEnabled(AllInOne.optionArcEnableBlood) and Ability.IsCastable(bloodthorn, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
-		if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.IsSilenced(enemy) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) then
+		if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.IsSilenced(enemy) then
 			Ability.CastTarget(bloodthorn,enemy)
 			needTime = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 			return
