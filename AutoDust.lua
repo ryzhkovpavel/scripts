@@ -7,25 +7,20 @@ local index
 local myHero
 local riki = nil
 local treant = nil
+local nyx = nil
+local sandking = nil
 local dust
+local checked = {}
 local pos = {}
 AutoDust.optionEnable = Menu.AddOptionBool({"Utility", "Auto Dust"}, "Enable", false)
 function AutoDust.Init( ... )
 	myHero = Heroes.GetLocal()
+	checked = {}
 	if not myHero then return end
 	riki = nil
 	treant = nil
-	local heroes = Heroes.GetAll()
-	for i = 1, #heroes do
-		local hero = heroes[i]
-		local heroName = NPC.GetUnitName(hero)
-		if heroName == "npc_dota_hero_riki" and not Entity.IsSameTeam(hero,myHero) then
-			riki = hero
-		end
-		if heroName == "npc_dota_hero_treant" and not Entity.IsSameTeam(hero,myHero) then
-			treant = hero
-		end
-	end
+	nyx = nil
+	sandking = nil
 end
 function AutoDust.OnGameStart( ... )
 	AutoDust.Init()
@@ -35,6 +30,21 @@ function AutoDust.OnUpdate()
 	if not myHero then return end
 	dust = NPC.GetItem(myHero, "item_dust")
 	if not dust then return end
+	if not checked[Heroes.Count()] then
+		for i = 1, Heroes.Count() do
+			local hero = Heroes.Get(i)
+			if NPC.GetUnitName(hero) == "npc_dota_hero_riki" and not Entity.IsSameTeam(myHero, hero) then
+				riki = hero
+			elseif NPC.GetUnitName(hero) == "npc_dota_hero_treant" and not Entity.IsSameTeam(myHero, hero) then
+				treant = hero
+			elseif NPC.GetUnitName(hero) == "npc_dota_hero_nyx_assassin" and not Entity.IsSameTeam(myHero, hero) then
+				nyx = hero
+			elseif NPC.GetUnitName(hero) == "npc_dota_hero_sand_king" and not Entity.IsSameTeam(myHero, hero) then
+				sandking = hero	
+			end		
+		end
+		checked[Heroes.Count()] = true
+	end
 	if riki then
 		if NPC.IsVisible(riki) and NPC.IsEntityInRange(riki,myHero,950) then
 			if Ability.GetLevel(NPC.GetAbilityByIndex(riki, 2)) > 0 then
@@ -72,14 +82,15 @@ function AutoDust.OnUpdate()
 end
 function AutoDust.OnParticleCreate(particle)
 	if not myHero or not Menu.IsEnabled(AutoDust.optionEnable) then return end
-	--Log.Write(tostring(particle.name))
-	if (particle.name == "nyx_assassin_vendetta_start" or particle.name == "sandking_sandstorm") and (not particle.entity or particle.entity == 0 or not Entity.IsSameTeam(myHero,particle.entity)) then
+	--Log.Write(tostring(sandking))
+	if (particle.name == "nyx_assassin_vendetta_start" and nyx) or (particle.name == "sandking_sandstorm" and sandking) then
+		--Log.Write("!")
 		index = particle.index
 	end
 end
 function AutoDust.OnParticleUpdate(particle)
 	if not myHero or not Menu.IsEnabled(AutoDust.optionEnable) then return end
-	if particle.index == index then
+	if particle.index == index and not pos[particle.index] then
 		pos[particle.index] = particle.position
 	end
 end
