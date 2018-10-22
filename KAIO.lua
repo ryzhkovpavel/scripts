@@ -2521,7 +2521,7 @@ function AllInOne.LegionCombo( ... )
 		end
 	end
 	if NPC.IsEntityInRange(myHero, enemy, NPC.GetAttackRange(myHero)*1.5) then
-		if AllInOne.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)then
+		if NPC.IsLinkensProtected(enemy) and Menu.IsEnabled(AllInOne.optionEnablePoopLinken) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)then
 			AllInOne.PoopLinken()
 		end
 		if w and Menu.IsEnabled(AllInOne.optionLegionEnablePressTheAttack) and Ability.IsCastable(w, myMana) and not NPC.HasState(myHero, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE)  then
@@ -2532,7 +2532,7 @@ function AllInOne.LegionCombo( ... )
 			Ability.CastNoTarget(bkb)
 			return
 		end
-		if abyssal and Ability.IsCastable(abyssal, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_STUNNED) and (Menu.IsEnabled(AllInOne.optionLegionEnableAbyssalWithDuel) or Menu.IsEnabled(AllInOne.optionLegionEnableAbyssalWthDuel)) then
+		if abyssal and Ability.IsCastable(abyssal, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_HEXED) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_STUNNED) and (Menu.IsEnabled(AllInOne.optionLegionEnableAbyssalWithDuel) or Menu.IsEnabled(AllInOne.optionLegionEnableAbyssalWthDuel)) and not AllInOne.IsAntiMageReflect(enemy) then
 			if Menu.IsEnabled(AllInOne.optionLegionEnableAbyssalWithDuel) and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) then
 				Ability.CastTarget(abyssal, enemy)
 				return
@@ -2566,15 +2566,15 @@ function AllInOne.LegionCombo( ... )
 			Ability.CastTarget(courage, enemy)
 			return
 		end
-		if halberd and Menu.IsEnabled(AllInOne.optionLegionEnableHalberd) and Ability.IsCastable(halberd, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if halberd and Menu.IsEnabled(AllInOne.optionLegionEnableHalberd) and Ability.IsCastable(halberd, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not AllInOne.IsAntiMageReflect(enemy) then
 			Ability.CastTarget(halberd, enemy)
 			return
 		end
-		if orchid and Menu.IsEnabled(AllInOne.optionLegionEnableOrchid) and Ability.IsCastable(orchid, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if orchid and Menu.IsEnabled(AllInOne.optionLegionEnableOrchid) and Ability.IsCastable(orchid, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not AllInOne.IsAntiMageReflect(enemy) then
 			Ability.CastTarget(orchid, enemy)
 			return
 		end
-		if bloodthorn and Menu.IsEnabled(AllInOne.optionLegionEnableBlood) and Ability.IsCastable(bloodthorn, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) then
+		if bloodthorn and Menu.IsEnabled(AllInOne.optionLegionEnableBlood) and Ability.IsCastable(bloodthorn, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not AllInOne.IsAntiMageReflect(enemy) then
 			Ability.CastTarget(bloodthorn, enemy)
 			return
 		end
@@ -2582,7 +2582,7 @@ function AllInOne.LegionCombo( ... )
 			Ability.CastNoTarget(satanic)
 			return
 		end
-		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not AllInOne.IsLinkensProtected(enemy) then
+		if r and Menu.IsEnabled(AllInOne.optionLegionEnableDuel) and Ability.IsCastable(r, myMana) and not NPC.IsLinkensProtected(enemy) then
 			if not NPC.IsEntityInRange(myHero, enemy, 150) then
 				Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_MOVE_TO_POSITION, nil, enemyPosition, nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 			else	
@@ -3250,6 +3250,14 @@ function AllInOne.IsLinkensProtected(npc)
 	if NPC.IsLinkensProtected(npc) then
 		return true
 	end
+	if NPC.GetUnitName(npc) == "npc_dota_hero_antimage" then
+		if (NPC.HasItem(npc, "item_ultimate_scepter") or NPC.HasModifier(npc, "modifier_item_ultimate_scepter_consumed")) and Ability.IsReady(NPC.GetAbility(npc, "antimage_spell_shield")) and not NPC.HasState(npc, Enum.ModifierState.MODIFIER_STATE_PASSIVES_DISABLED) then
+			return true
+		end
+	end
+	return false
+end
+function AllInOne.IsAntiMageReflect(npc)
 	if NPC.GetUnitName(npc) == "npc_dota_hero_antimage" then
 		if (NPC.HasItem(npc, "item_ultimate_scepter") or NPC.HasModifier(npc, "modifier_item_ultimate_scepter_consumed")) and Ability.IsReady(NPC.GetAbility(npc, "antimage_spell_shield")) and not NPC.HasState(npc, Enum.ModifierState.MODIFIER_STATE_PASSIVES_DISABLED) then
 			return true
