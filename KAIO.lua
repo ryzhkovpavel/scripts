@@ -1503,7 +1503,7 @@ function AllInOne.ArcCloneCombo(target, bool)
 			return
 		end
 		if clone_orchid and time >= needTime2 and Menu.IsEnabled(AllInOne.optionArcEnableOrchid) and Ability.IsCastable(clone_orchid, myMana) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
-			if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.HasModifier(enemy, "modifier_orchid_malevolence_debuff") and not NPC.HasModifier(enemy, "modifier_bloodthorn_debuff") then
+			if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.HasModifier(target, "modifier_orchid_malevolence_debuff") and not NPC.HasModifier(target, "modifier_bloodthorn_debuff") then
 				Ability.CastTarget(clone_orchid,target)
 				needTime2 = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 				return
@@ -1514,7 +1514,7 @@ function AllInOne.ArcCloneCombo(target, bool)
 			end
 		end
 		if clone_blood and time >= needTime2 and Menu.IsEnabled(AllInOne.optionArcEnableBlood) and Ability.IsCastable(clone_blood, myMana) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_MAGIC_IMMUNE) and not NPC.HasState(target, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) then
-			if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.HasModifier(enemy, "modifier_orchid_malevolence_debuff") and not NPC.HasModifier(enemy, "modifier_bloodthorn_debuff") then
+			if Menu.IsEnabled(AllInOne.optionArcDebuffUnstack) and not NPC.HasModifier(target, "modifier_orchid_malevolence_debuff") and not NPC.HasModifier(target, "modifier_bloodthorn_debuff") then
 				Ability.CastTarget(clone_blood,target)
 				needTime2 = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 				return
@@ -1861,7 +1861,7 @@ function AllInOne.TinkerNeedRearm( ... )
 	if eblade and Menu.IsEnabled(AllInOne.optionTinkerEnableEblade) and Ability.IsCastable(eblade, myMana) then
 		bool = false
 	end
-	if bkb and Menu.IsEnabled(GetAvgLatency.optionTinkerEnableBkb) and Ability.IsCastable(bkb, 0) then
+	if bkb and Menu.IsEnabled(AllInOne.optionTinkerEnableBkb) and Ability.IsCastable(bkb, 0) then
 		bool = false
 	end
 	if lotus and Menu.IsEnabled(AllInOne.optionTinkerEnableLotus) and Ability.IsCastable(lotus, myMana) then
@@ -2196,10 +2196,10 @@ function AllInOne.SfCombo( ... )
 			Ability.CastNoTarget(phase)
 		end
 		if eul and Ability.IsCastable(eul, myMana) and not NPC.HasState(enemy, Enum.ModifierState.MODIFIER_STATE_INVULNERABLE) and not AllInOne.IsLinkensProtected(enemy) then
-			if Menu.IsEnabled(AllInOne.optionSfEnableEthereal) and ebladeCasted[enemy] and eblade and Ability.SecondsSinceLastUse(eblade) < 3 then
+			if Menu.IsEnabled(AllInOne.optionSfEnableEthereal) and KAIO.EbladeUsed == enemy and eblade and Ability.SecondsSinceLastUse(eblade) < 3 then
 				if NPC.HasModifier(enemy, "modifier_item_ethereal_blade_ethereal") then
 					Ability.CastTarget(eul, enemy)
-					ebladeCasted[enemy] = nil
+					KAIO.EbladeUsed = nil
 				end
 			else
 				Ability.CastTarget(eul, enemy)

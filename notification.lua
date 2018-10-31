@@ -225,7 +225,7 @@ function notification.OnEntityCreate(ent)
 end
 function notification.OnEntityDestroy(ent)
 	if ent == aegisEnt then
-		eventTable["roshDead"] = time
+		
 		aegisEnt = nil
 	end
 end
@@ -396,6 +396,7 @@ function notification.OnParticleCreate(particle)
 				Engine.ExecuteCommand("say_team Рошан помер - "..min..":"..sec)	
 			end
 		end
+		eventTable["roshDead"] = time
 		roshAlive = false
 	end
 	if particle.name == "nyx_assassin_vendetta_start" and nyx then
