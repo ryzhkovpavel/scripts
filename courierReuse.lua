@@ -83,7 +83,7 @@ function courierReuse.OnUpdate( ... )
 					break	
 				end
 			end
-			for i = 9, 15 do
+			for i = 9, 14 do
 				if NPC.GetItemByIndex(myHero, i) and NPC.GetItemByIndex(myHero, i) ~= 0 and Item.GetPlayerOwnerID(NPC.GetItemByIndex(myHero, i)) == Hero.GetPlayerID(myHero) then
 					pickItem = true
 					break
