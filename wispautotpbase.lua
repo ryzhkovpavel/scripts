@@ -10,6 +10,7 @@ local dieTime
 local x,y
 function wisp.Init()
 	myHero = Heroes.GetLocal()
+	if not myHero then return end
 	myTeam = Entity.GetTeamNum(myHero)
 	if myTeam == 3 then 
 		base = Vector(7264.000000, 6560.000000, 512.000000)
