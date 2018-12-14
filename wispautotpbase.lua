@@ -36,7 +36,7 @@ function wisp.OnUpdate()
 	if not toggled1 then return end
 	if NPC.HasModifier(myHero, "modifier_wisp_relocate_return") then
 		local mod = NPC.GetModifier(myHero, "modifier_wisp_relocate_return")
-		local tp = NPC.GetItem(myHero, "item_tpscroll", true)
+		local tp = NPC.GetItemByIndex(myHero, 15)
 		if not tp then
 			tp = NPC.GetItem(myHero, "item_travel_boots", true)
 			if not tp then
