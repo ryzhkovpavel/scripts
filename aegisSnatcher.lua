@@ -62,11 +62,11 @@ function aegisSnatcher.OnUpdate( ... )
 		Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_PICKUP_ITEM, aegis["ent"],Vector(0,0,0),nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 		nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 	end
-	if cheese["ent"] and Menu.IsEnabled(aegisSnatcher.optionEnableAegis) and NPC.IsPositionInRange(myHero, cheese["pos"], Menu.GetValue(aegisSnatcher.optionRangeToSnatch)) and Entity.IsAlive(myHero) and time >= nextTick and NPC.IsPositionInRange(myHero, roshpit, 750) and aegisSnatcher.HasInventorySlotFree() then
+	if cheese["ent"] and Menu.IsEnabled(aegisSnatcher.optionEnableCheese) and NPC.IsPositionInRange(myHero, cheese["pos"], Menu.GetValue(aegisSnatcher.optionRangeToSnatch)) and Entity.IsAlive(myHero) and time >= nextTick and NPC.IsPositionInRange(myHero, roshpit, 750) and aegisSnatcher.HasInventorySlotFree() then
 		Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_PICKUP_ITEM, cheese["ent"],Vector(0,0,0),nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 		nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 	end
-	if refresh["ent"] and Menu.IsEnabled(aegisSnatcher.optionEnableAegis) and NPC.IsPositionInRange(myHero, refresh["pos"], Menu.GetValue(aegisSnatcher.optionRangeToSnatch)) and Entity.IsAlive(myHero) and time >= nextTick and NPC.IsPositionInRange(myHero, roshpit, 750) and aegisSnatcher.HasInventorySlotFree() then
+	if refresh["ent"] and Menu.IsEnabled(aegisSnatcher.optionEnableRefresher) and NPC.IsPositionInRange(myHero, refresh["pos"], Menu.GetValue(aegisSnatcher.optionRangeToSnatch)) and Entity.IsAlive(myHero) and time >= nextTick and NPC.IsPositionInRange(myHero, roshpit, 750) and aegisSnatcher.HasInventorySlotFree() then
 		Player.PrepareUnitOrders(myPlayer, Enum.UnitOrder.DOTA_UNIT_ORDER_PICKUP_ITEM, refresh["ent"],Vector(0,0,0),nil, Enum.PlayerOrderIssuer.DOTA_ORDER_ISSUER_PASSED_UNIT_ONLY, myHero)
 		nextTick = time + 0.1 + NetChannel.GetAvgLatency(Enum.Flow.FLOW_OUTGOING)
 	end
